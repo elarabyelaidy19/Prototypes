@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forood AI — Inheritance Calculator Service Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600;700&family=Noto+Sans+Mono:wght@400;500;600&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============ THEME — Editorial with Gold / Emerald / Deep Blue ============ */
+  :root {
+    --font-body: 'Crimson Pro', Georgia, serif;
+    --font-mono: 'Noto Sans Mono', 'SF Mono', Consolas, monospace;
+    --font-ar: 'Noto Sans Arabic', 'Segoe UI', Tahoma, sans-serif;
+
+    --bg: #faf8f4;
+    --surface: #ffffff;
+    --surface2: #f5f2ec;
+    --surface-elevated: #fffdf8;
+    --border: rgba(0, 0, 0, 0.07);
+    --border-bright: rgba(0, 0, 0, 0.14);
+    --text: #1c1917;
+    --text-dim: #78716c;
+
+    --gold: #b5761a;
+    --gold-dim: rgba(181, 118, 26, 0.08);
+    --gold-pale: #fef3c7;
+    --emerald: #047857;
+    --emerald-dim: rgba(4, 120, 87, 0.07);
+    --emerald-pale: #d1fae5;
+    --navy: #1e3a5f;
+    --navy-dim: rgba(30, 58, 95, 0.07);
+    --navy-pale: #dbeafe;
+    --ruby: #be123c;
+    --ruby-dim: rgba(190, 18, 60, 0.07);
+    --amber: #d97706;
+    --amber-dim: rgba(217, 119, 6, 0.07);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #131110;
+      --surface: #1c1917;
+      --surface2: #292524;
+      --surface-elevated: #2c2520;
+      --border: rgba(255, 255, 255, 0.07);
+      --border-bright: rgba(255, 255, 255, 0.14);
+      --text: #f5f0e8;
+      --text-dim: #a8a29e;
+
+      --gold: #fbbf24;
+      --gold-dim: rgba(251, 191, 36, 0.12);
+      --gold-pale: #422006;
+      --emerald: #34d399;
+      --emerald-dim: rgba(52, 211, 153, 0.10);
+      --emerald-pale: #064e3b;
+      --navy: #93c5fd;
+      --navy-dim: rgba(147, 197, 253, 0.10);
+      --navy-pale: #1e3a5f;
+      --ruby: #fda4af;
+      --ruby-dim: rgba(253, 164, 175, 0.10);
+      --amber: #fbbf24;
+      --amber-dim: rgba(251, 191, 36, 0.10);
+    }
+  }
+
+  /* ============ RESET + BASE ============ */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse at 15% 0%, var(--gold-dim) 0%, transparent 50%),
+      radial-gradient(ellipse at 85% 100%, var(--emerald-dim) 0%, transparent 40%);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.7;
+    padding: 40px;
+    min-height: 100vh;
+  }
+
+  /* ============ NAVIGATION ============ */
+  .wrap {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 0 40px;
+  }
+  .main { min-width: 0; }
+
+  .toc {
+    position: sticky;
+    top: 24px;
+    align-self: start;
+    padding: 14px 0;
+    grid-row: 1 / -1;
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+  }
+  .toc::-webkit-scrollbar { width: 3px; }
+  .toc::-webkit-scrollbar-thumb { background: var(--surface-elevated); border-radius: 2px; }
+
+  .toc-title {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    padding: 0 0 10px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .toc a {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 5px;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    line-height: 1.4;
+    margin-bottom: 1px;
+  }
+  .toc a:hover { color: var(--text); background: var(--surface2); }
+  .toc a.active { color: var(--text); border-left-color: var(--gold); }
+
+  /* ============ ANIMATION ============ */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeScale {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .animate {
+    animation: fadeUp 0.45s ease-out both;
+    animation-delay: calc(var(--i, 0) * 0.06s);
+  }
+  .animate-scale {
+    animation: fadeScale 0.4s ease-out both;
+    animation-delay: calc(var(--i, 0) * 0.06s);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-delay: 0ms !important;
+      transition-duration: 0.01ms !important;
+    }
+    .mermaid-wrap .mermaid { transition: none; }
+  }
+
+  /* ============ TYPOGRAPHY ============ */
+  h1 {
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: -1.2px;
+    margin-bottom: 4px;
+    text-wrap: balance;
+  }
+  h1 .ar-title {
+    font-family: var(--font-ar);
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    margin-bottom: 36px;
+  }
+
+  .sec-head {
+    font-family: var(--font-body);
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: 48px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sec-head .sec-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .sec-desc {
+    font-size: 15px;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+    max-width: 750px;
+  }
+
+  .ar-label {
+    font-family: var(--font-ar);
+    direction: rtl;
+    unicode-bidi: isolate;
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: var(--gold-dim);
+    color: var(--gold);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+
+  /* ============ MERMAID ============ */
+  .mermaid-wrap {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 20px;
+    overflow: auto;
+    margin-bottom: 20px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .mermaid-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
+  .mermaid-wrap::-webkit-scrollbar-track { background: transparent; }
+  .mermaid-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .mermaid-wrap .mermaid {
+    display: flex;
+    justify-content: center;
+    transition: transform 0.2s ease;
+    transform-origin: top center;
+  }
+
+  .mermaid-wrap.is-zoomed { cursor: grab; }
+  .mermaid-wrap.is-panning { cursor: grabbing; user-select: none; }
+
+  .mermaid-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+
+  .zoom-controls {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 2px;
+    z-index: 10;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px;
+  }
+  .zoom-controls button {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .zoom-controls button:hover {
+    background: var(--border);
+    color: var(--text);
+  }
+
+  /* Mermaid SVG overrides */
+  .mermaid .nodeLabel {
+    font-family: var(--font-body) !important;
+    font-size: 14px !important;
+    color: var(--text) !important;
+  }
+  .mermaid .edgeLabel {
+    font-family: var(--font-mono) !important;
+    font-size: 11px !important;
+    color: var(--text-dim) !important;
+    background-color: var(--bg) !important;
+  }
+  .mermaid .edgeLabel rect { fill: var(--bg) !important; }
+  .mermaid .node rect,
+  .mermaid .node circle,
+  .mermaid .node polygon { stroke-width: 1.5px !important; }
+  .mermaid .edge-pattern-solid { stroke-width: 1.5px !important; }
+
+  /* ============ CARDS ============ */
+  .ve-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    position: relative;
+    min-width: 0;
+    overflow-wrap: break-word;
+  }
+  .ve-card--hero {
+    background: var(--surface-elevated);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    border-color: color-mix(in srgb, var(--border) 50%, var(--gold) 50%);
+    padding: 24px 28px;
+  }
+  .ve-card--recessed {
+    background: var(--surface2);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+
+  .ve-card__label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ve-card__label .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  /* ============ FILE GRID ============ */
+  .file-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .file-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    transition: border-color 0.2s;
+  }
+  .file-card:hover { border-color: var(--border-bright); }
+  .file-card .fname {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .file-card .fdesc {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .file-card .flines {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 6px;
+    opacity: 0.7;
+  }
+
+  /* ============ HEIR TABLE ============ */
+  .heir-table-wrap {
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .heir-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .heir-table th {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .heir-table td {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .heir-table tr:last-child td { border-bottom: none; }
+  .heir-table tr:nth-child(even) td { background: color-mix(in srgb, var(--surface2) 40%, var(--surface) 60%); }
+  .heir-table .ar-cell {
+    font-family: var(--font-ar);
+    direction: rtl;
+    unicode-bidi: isolate;
+    font-size: 15px;
+  }
+  .heir-table .cat-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .cat-spouse { background: var(--ruby-dim); color: var(--ruby); }
+  .cat-parent { background: var(--gold-dim); color: var(--gold); }
+  .cat-gparent { background: var(--amber-dim); color: var(--amber); }
+  .cat-child { background: var(--emerald-dim); color: var(--emerald); }
+  .cat-gchild { background: var(--navy-dim); color: var(--navy); }
+  .cat-fsib { background: var(--gold-dim); color: var(--gold); }
+  .cat-psib { background: var(--emerald-dim); color: var(--emerald); }
+  .cat-msib { background: var(--navy-dim); color: var(--navy); }
+
+  /* ============ SHARE PILLS ============ */
+  .share-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .share-pill {
+    text-align: center;
+    padding: 14px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .share-pill .frac {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+  .share-pill .pct {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  /* ============ CALLOUT ============ */
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0 10px 10px 0;
+    padding: 14px 18px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+  }
+  .callout--gold { border-left: 3px solid var(--gold); }
+  .callout--emerald { border-left: 3px solid var(--emerald); }
+  .callout--navy { border-left: 3px solid var(--navy); }
+  .callout--ruby { border-left: 3px solid var(--ruby); }
+  .callout strong { color: var(--text); }
+
+  /* ============ LEGEND ============ */
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .legend-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 1000px) {
+    .wrap { grid-template-columns: 1fr; padding-top: 0; }
+    body { padding-top: 0; }
+    .toc {
+      position: sticky; top: 0; z-index: 200;
+      max-height: none; display: flex; gap: 4px; align-items: center;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      background: var(--bg); border-bottom: 1px solid var(--border);
+      padding: 10px 0; margin: 0 -40px; padding-left: 40px; padding-right: 40px;
+      grid-row: auto;
+    }
+    .toc::-webkit-scrollbar { display: none; }
+    .toc-title { display: none; }
+    .toc a {
+      white-space: nowrap; flex-shrink: 0;
+      border-left: none; border-bottom: 2px solid transparent;
+      border-radius: 4px 4px 0 0; padding: 6px 10px; font-size: 10px;
+    }
+    .toc a.active { border-left: none; border-bottom-color: var(--gold); background: var(--surface); }
+    .main { padding-top: 20px; }
+    .sec-head { scroll-margin-top: 52px; }
+  }
+  @media (max-width: 768px) {
+    body { padding: 16px; }
+    h1 { font-size: 26px; }
+    .mermaid-wrap { padding: 16px 12px; }
+    .file-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <nav class="toc" id="toc">
+    <div class="toc-title">Contents</div>
+    <a href="#s1">Overview</a>
+    <a href="#s2">File Architecture</a>
+    <a href="#s3">Calculation Pipeline</a>
+    <a href="#s4">Heir Types</a>
+    <a href="#s5">Share Distribution</a>
+    <a href="#s6">Blocking Rules</a>
+    <a href="#s7">Special Cases</a>
+    <a href="#s8">Result Builder</a>
+  </nav>
+
+  <div class="main">
+
+    <h1 class="animate" style="--i:0">Inheritance Calculator &nbsp;<span class="ar-title">حاسبة المواريث</span></h1>
+    <p class="subtitle animate" style="--i:1">app/services/inheritance/ &mdash; Forood AI &mdash; Islamic Inheritance Law (Faraid)</p>
+
+    <!-- ═══════════ S1: OVERVIEW ═══════════ -->
+    <div id="s1" class="sec-head animate" style="--i:2"><span class="sec-dot" style="background:var(--gold)"></span> Service Overview</div>
+
+    <div class="ve-card ve-card--hero animate" style="--i:3; margin-bottom: 20px;">
+      <p style="font-size:15px; line-height:1.7;">
+        The <strong>Inheritance Calculator</strong> implements Islamic inheritance law
+        (<span class="ar-label">علم الفرائض</span>) as a pure Ruby service pipeline.
+        It takes a deceased person's gender, estate amount, and list of heirs &mdash;
+        then computes each heir's legally mandated share according to Quranic fixed shares
+        (<span class="ar-label">فرض</span>) and residuary rules
+        (<span class="ar-label">تعصيب</span>), handling blocking
+        (<span class="ar-label">حجب</span>), proportional reduction
+        (<span class="ar-label">عول</span>), and surplus redistribution
+        (<span class="ar-label">رد</span>).
+      </p>
+    </div>
+
+    <div class="callout callout--gold animate" style="--i:4">
+      <strong>Public API:</strong>
+      <code>Inheritance::Calculator.new(deceased_gender:, estate_amount:, heirs:).calculate</code>
+      &rarr; returns a <code>Result</code> struct consumed by the controller and view.
+    </div>
+
+    <!-- ═══════════ S2: FILE ARCHITECTURE ═══════════ -->
+    <div id="s2" class="sec-head animate" style="--i:5"><span class="sec-dot" style="background:var(--emerald)"></span> File Architecture</div>
+
+    <p class="sec-desc animate" style="--i:6">
+      Seven focused files, each with a single responsibility. The <code>Calculator</code> orchestrates the pipeline.
+    </p>
+
+    <div class="file-grid animate" style="--i:7">
+      <div class="file-card" style="border-left: 3px solid var(--gold);">
+        <div class="fname">inheritance.rb</div>
+        <div class="fdesc">Namespace root. Defines <code>HeirShare</code> and <code>Result</code> structs, plus <code>HeirHelpers</code> module.</div>
+        <div class="flines">~36 lines</div>
+      </div>
+      <div class="file-card" style="border-left: 3px solid var(--gold);">
+        <div class="fname">constants.rb</div>
+        <div class="fdesc"><code>HEIR_LABELS</code> (16 types, AR/EN) and <code>SHARE_REASONS</code> (37 reason codes).</div>
+        <div class="flines">~68 lines</div>
+      </div>
+      <div class="file-card" style="border-left: 3px solid var(--ruby);">
+        <div class="fname">validator.rb</div>
+        <div class="fdesc">Input coherence checks. Raises <code>ArgumentError</code> on invalid gender/heir combos.</div>
+        <div class="flines">~17 lines</div>
+      </div>
+      <div class="file-card" style="border-left: 3px solid var(--ruby);">
+        <div class="fname">blocker.rb</div>
+        <div class="fdesc">Blocking rules (<span class="ar-label">حجب الحرمان</span>). Removes blocked heirs + safety net.</div>
+        <div class="flines">~93 lines</div>
+      </div>
+      <div class="file-card" style="border-left: 3px solid var(--emerald);">
+        <div class="fname">share_computer.rb</div>
+        <div class="fdesc">11 compute methods for each heir category. Handles <span class="ar-label">العمريتان</span> special case.</div>
+        <div class="flines">~250 lines</div>
+      </div>
+      <div class="file-card" style="border-left: 3px solid var(--navy);">
+        <div class="fname">result_builder.rb</div>
+        <div class="fdesc">Awl/Radd math, base denominator (<span class="ar-label">أصل المسألة</span>), final Result assembly.</div>
+        <div class="flines">~134 lines</div>
+      </div>
+      <div class="file-card" style="border-left: 3px solid var(--gold); background: var(--surface-elevated);">
+        <div class="fname">calculator.rb</div>
+        <div class="fdesc">Slim orchestrator. Wires all components together in ~40 lines.</div>
+        <div class="flines">~40 lines &mdash; entry point</div>
+      </div>
+    </div>
+
+    <div class="mermaid-wrap animate" style="--i:8">
+      <div class="zoom-controls">
+        <button onclick="zoomDiagram(this, 1.2)" title="Zoom in">+</button>
+        <button onclick="zoomDiagram(this, 0.8)" title="Zoom out">&minus;</button>
+        <button onclick="resetZoom(this)" title="Reset zoom">&#8634;</button>
+      </div>
+      <div class="mermaid-label">Module Dependency Graph</div>
+      <pre class="mermaid">
+        graph LR
+          T["inheritance.rb<br/>HeirShare, Result, HeirHelpers"]
+          C["constants.rb<br/>HEIR_LABELS, SHARE_REASONS"]
+          V["validator.rb"]
+          B["blocker.rb"]
+          SC["share_computer.rb"]
+          RB["result_builder.rb"]
+          CA["calculator.rb"]
+
+          CA --> V
+          CA --> B
+          CA --> SC
+          CA --> RB
+
+          B --> T
+          SC --> T
+          SC --> B
+          RB --> T
+          RB --> C
+
+          classDef orch fill:#b5761a22,stroke:#b5761a,stroke-width:2px
+          classDef shared fill:#04785722,stroke:#047857,stroke-width:1.5px
+          classDef logic fill:#1e3a5f22,stroke:#1e3a5f,stroke-width:1.5px
+          classDef guard fill:#be123c22,stroke:#be123c,stroke-width:1.5px
+
+          class CA orch
+          class T,C shared
+          class SC,RB logic
+          class V,B guard
+      </pre>
+    </div>
+
+    <div class="legend animate" style="--i:9">
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--gold-dim); border:1px solid var(--gold)"></div> Orchestrator</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--emerald-dim); border:1px solid var(--emerald)"></div> Shared Types</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--navy-dim); border:1px solid var(--navy)"></div> Computation</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--ruby-dim); border:1px solid var(--ruby)"></div> Validation / Guard</div>
+    </div>
+
+    <!-- ═══════════ S3: CALCULATION PIPELINE ═══════════ -->
+    <div id="s3" class="sec-head animate" style="--i:10"><span class="sec-dot" style="background:var(--navy)"></span> Calculation Pipeline</div>
+
+    <p class="sec-desc animate" style="--i:11">
+      The full flow from HTTP request to rendered result. Each step transforms data and passes it downstream.
+    </p>
+
+    <div class="mermaid-wrap animate" style="--i:12">
+      <div class="zoom-controls">
+        <button onclick="zoomDiagram(this, 1.2)" title="Zoom in">+</button>
+        <button onclick="zoomDiagram(this, 0.8)" title="Zoom out">&minus;</button>
+        <button onclick="resetZoom(this)" title="Reset zoom">&#8634;</button>
+      </div>
+      <div class="mermaid-label">Full Calculation Flow</div>
+      <pre class="mermaid">
+        graph TD
+          REQ["POST /calculate<br/>deceased_gender, estate_amount, heirs"]
+          INIT["Calculator.new<br/>Parse input, symbolize keys, BigDecimal"]
+          VAL{"Validator.validate!"}
+          ERR["ArgumentError<br/>Render _error.html.erb"]
+          BLOCK["Blocker.apply_blocking<br/>Returns active_heirs"]
+          COMP["ShareComputer.compute<br/>Populates fixed, reasons, residuary"]
+          DYN["Dynamic blocking?<br/>Full sister as asaba"]
+          ENF["Blocker.enforce_blocking!<br/>Safety net cleanup"]
+          BUILD["ResultBuilder.build<br/>Awl / Radd / Normal"]
+          RES["Result struct<br/>heir_shares, denominators, debug_info"]
+          VIEW["Render _result.html.erb<br/>Table, chart, blocked list"]
+
+          REQ --> INIT
+          INIT --> VAL
+          VAL -->|"Invalid"| ERR
+          VAL -->|"Valid"| BLOCK
+          BLOCK --> COMP
+          COMP -.->|"may trigger"| DYN
+          DYN -.-> BLOCK
+          COMP --> ENF
+          ENF --> BUILD
+          BUILD --> RES
+          RES --> VIEW
+
+          classDef req fill:#b5761a22,stroke:#b5761a,stroke-width:2px
+          classDef guard fill:#be123c22,stroke:#be123c,stroke-width:1.5px
+          classDef logic fill:#1e3a5f22,stroke:#1e3a5f,stroke-width:1.5px
+          classDef result fill:#04785722,stroke:#047857,stroke-width:2px
+          classDef err fill:#be123c33,stroke:#be123c,stroke-width:1.5px,stroke-dasharray:5 5
+
+          class REQ,INIT req
+          class VAL,BLOCK,DYN,ENF guard
+          class COMP,BUILD logic
+          class RES,VIEW result
+          class ERR err
+      </pre>
+    </div>
+
+    <div class="callout callout--navy animate" style="--i:13">
+      <strong>Data flow detail:</strong>
+      The <code>Blocker</code> is stateful &mdash; it accumulates blocked heirs during initial screening
+      <em>and</em> can receive additional blocks from <code>ShareComputer</code> mid-computation
+      (when full sisters become <span class="ar-label">عصبة مع الغير</span>).
+      The <code>enforce_blocking!</code> call is a safety net that scrubs any blocked heir from the final shares.
+    </div>
+
+    <!-- ═══════════ S4: HEIR TYPES ═══════════ -->
+    <div id="s4" class="sec-head animate" style="--i:14"><span class="sec-dot" style="background:var(--gold)"></span> Heir Types <span class="ar-label" style="font-size:18px; font-weight:400; color:var(--gold);">الورثة</span></div>
+
+    <p class="sec-desc animate" style="--i:15">
+      16 heir types organized into 7 categories. Each type has Arabic and English labels.
+    </p>
+
+    <div class="heir-table-wrap animate" style="--i:16">
+      <table class="heir-table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Key</th>
+            <th style="text-align:right; direction:rtl;">Arabic</th>
+            <th>English</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="cat-badge cat-spouse">SPOUSE</span></td><td><code>husband</code></td><td class="ar-cell">الزوج</td><td>Husband</td></tr>
+          <tr><td><span class="cat-badge cat-spouse">SPOUSE</span></td><td><code>wife</code></td><td class="ar-cell">الزوجة</td><td>Wife</td></tr>
+          <tr><td><span class="cat-badge cat-parent">PARENT</span></td><td><code>father</code></td><td class="ar-cell">الأب</td><td>Father</td></tr>
+          <tr><td><span class="cat-badge cat-parent">PARENT</span></td><td><code>mother</code></td><td class="ar-cell">الأم</td><td>Mother</td></tr>
+          <tr><td><span class="cat-badge cat-gparent">GRANDPARENT</span></td><td><code>grandfather</code></td><td class="ar-cell">الجد</td><td>Grandfather</td></tr>
+          <tr><td><span class="cat-badge cat-gparent">GRANDPARENT</span></td><td><code>grandmother</code></td><td class="ar-cell">الجدة</td><td>Grandmother</td></tr>
+          <tr><td><span class="cat-badge cat-child">CHILD</span></td><td><code>son</code></td><td class="ar-cell">الابن</td><td>Son</td></tr>
+          <tr><td><span class="cat-badge cat-child">CHILD</span></td><td><code>daughter</code></td><td class="ar-cell">البنت</td><td>Daughter</td></tr>
+          <tr><td><span class="cat-badge cat-gchild">GRANDCHILD</span></td><td><code>sons_son</code></td><td class="ar-cell">ابن الابن</td><td>Grandson</td></tr>
+          <tr><td><span class="cat-badge cat-gchild">GRANDCHILD</span></td><td><code>sons_daughter</code></td><td class="ar-cell">بنت الابن</td><td>Granddaughter</td></tr>
+          <tr><td><span class="cat-badge cat-fsib">FULL SIB</span></td><td><code>full_brother</code></td><td class="ar-cell">الأخ الشقيق</td><td>Full Brother</td></tr>
+          <tr><td><span class="cat-badge cat-fsib">FULL SIB</span></td><td><code>full_sister</code></td><td class="ar-cell">الأخت الشقيقة</td><td>Full Sister</td></tr>
+          <tr><td><span class="cat-badge cat-psib">PAT. SIB</span></td><td><code>paternal_brother</code></td><td class="ar-cell">الأخ لأب</td><td>Half-Brother (paternal)</td></tr>
+          <tr><td><span class="cat-badge cat-psib">PAT. SIB</span></td><td><code>paternal_sister</code></td><td class="ar-cell">الأخت لأب</td><td>Half-Sister (paternal)</td></tr>
+          <tr><td><span class="cat-badge cat-msib">MAT. SIB</span></td><td><code>maternal_brother</code></td><td class="ar-cell">الأخ لأم</td><td>Half-Brother (maternal)</td></tr>
+          <tr><td><span class="cat-badge cat-msib">MAT. SIB</span></td><td><code>maternal_sister</code></td><td class="ar-cell">الأخت لأم</td><td>Half-Sister (maternal)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ═══════════ S5: SHARE DISTRIBUTION ═══════════ -->
+    <div id="s5" class="sec-head animate" style="--i:17"><span class="sec-dot" style="background:var(--emerald)"></span> Share Distribution Logic <span class="ar-label" style="font-size:18px; font-weight:400; color:var(--emerald);">توزيع الأنصبة</span></div>
+
+    <p class="sec-desc animate" style="--i:18">
+      Shares are either <strong>fixed</strong> (<span class="ar-label">فرض</span>) &mdash; Quranic fractions &mdash; or <strong>residuary</strong> (<span class="ar-label">تعصيب</span>) &mdash; what remains after fixed shares.
+    </p>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;" class="animate" style="--i:19">
+      <div class="ve-card" style="border-top: 3px solid var(--gold);">
+        <div class="ve-card__label" style="color:var(--gold);"><span class="dot" style="background:var(--gold)"></span> Fixed Shares <span class="ar-label">فرض</span></div>
+        <p style="font-size:14px; color:var(--text-dim); margin-bottom:12px;">Quranic fractions assigned by law based on heir type, count, and presence of other heirs.</p>
+        <div class="share-grid">
+          <div class="share-pill"><div class="frac">1/2</div><div class="pct">50%</div></div>
+          <div class="share-pill"><div class="frac">1/4</div><div class="pct">25%</div></div>
+          <div class="share-pill"><div class="frac">1/8</div><div class="pct">12.5%</div></div>
+          <div class="share-pill"><div class="frac">1/3</div><div class="pct">33.3%</div></div>
+          <div class="share-pill"><div class="frac">1/6</div><div class="pct">16.7%</div></div>
+          <div class="share-pill"><div class="frac">2/3</div><div class="pct">66.7%</div></div>
+        </div>
+      </div>
+      <div class="ve-card" style="border-top: 3px solid var(--emerald);">
+        <div class="ve-card__label" style="color:var(--emerald);"><span class="dot" style="background:var(--emerald)"></span> Residuary <span class="ar-label">تعصيب</span></div>
+        <p style="font-size:14px; color:var(--text-dim); margin-bottom:12px;">Heirs who receive the remainder after fixed shares. Males receive <strong>2x</strong> female weight.</p>
+        <div class="callout callout--emerald" style="margin-bottom:0; font-size:13px;">
+          <strong>Weight system:</strong> Each male heir gets weight=2, female gets weight=1.
+          Remainder is split proportionally by <code>count * weight</code> per heir type.
+          E.g., 2 sons + 1 daughter: sons share = 4/5 of remainder, daughter = 1/5.
+        </div>
+      </div>
+    </div>
+
+    <div class="mermaid-wrap animate" style="--i:20">
+      <div class="zoom-controls">
+        <button onclick="zoomDiagram(this, 1.2)" title="Zoom in">+</button>
+        <button onclick="zoomDiagram(this, 0.8)" title="Zoom out">&minus;</button>
+        <button onclick="resetZoom(this)" title="Reset zoom">&#8634;</button>
+      </div>
+      <div class="mermaid-label">ShareComputer Decision Flow</div>
+      <pre class="mermaid">
+        graph TD
+          START["ShareComputer.compute"] --> SP["compute_spouse"]
+          SP --> CH["compute_children"]
+          CH --> GCH["compute_grandchildren"]
+          GCH --> FA["compute_father"]
+          FA --> MO["compute_mother"]
+          MO --> GFA["compute_grandfather"]
+          GFA --> GMO["compute_grandmother"]
+          GMO --> MS["compute_maternal_siblings"]
+          MS --> FS["compute_full_siblings"]
+          FS --> PS["compute_paternal_siblings"]
+          PS --> UM["apply_umariyyatan!"]
+
+          FS -.->|"sisters as asaba?"| BLK["blocker.block_paternal!"]
+
+          classDef start fill:#b5761a22,stroke:#b5761a,stroke-width:2px
+          classDef comp fill:#1e3a5f22,stroke:#1e3a5f,stroke-width:1.5px
+          classDef special fill:#04785722,stroke:#047857,stroke-width:2px
+          classDef block fill:#be123c22,stroke:#be123c,stroke-width:1.5px,stroke-dasharray:5 5
+
+          class START start
+          class SP,CH,GCH,FA,MO,GFA,GMO,MS,FS,PS comp
+          class UM special
+          class BLK block
+      </pre>
+    </div>
+
+    <!-- ═══════════ S6: BLOCKING RULES ═══════════ -->
+    <div id="s6" class="sec-head animate" style="--i:21"><span class="sec-dot" style="background:var(--ruby)"></span> Blocking Rules <span class="ar-label" style="font-size:18px; font-weight:400; color:var(--ruby);">حجب الحرمان</span></div>
+
+    <p class="sec-desc animate" style="--i:22">
+      Certain heirs block others from inheriting entirely. The <code>Blocker</code> applies these rules
+      before computation begins, removing blocked heirs from the active set.
+    </p>
+
+    <div class="mermaid-wrap animate" style="--i:23">
+      <div class="zoom-controls">
+        <button onclick="zoomDiagram(this, 1.2)" title="Zoom in">+</button>
+        <button onclick="zoomDiagram(this, 0.8)" title="Zoom out">&minus;</button>
+        <button onclick="resetZoom(this)" title="Reset zoom">&#8634;</button>
+      </div>
+      <div class="mermaid-label">Blocking Hierarchy</div>
+      <pre class="mermaid">
+        graph TD
+          SON["Son"] --x GSON["Grandson"]
+          SON --x GDAU["Granddaughter"]
+          SON --x FB["Full Brother"]
+          SON --x FS2["Full Sister"]
+          SON --x PBR["Paternal Brother"]
+          SON --x PSI["Paternal Sister"]
+
+          FATHER["Father"] --x GF["Grandfather"]
+          FATHER --x FB2["Full Brother "]
+          FATHER --x FS3["Full Sister "]
+          FATHER --x PB2["Paternal Brother "]
+          FATHER --x PS2["Paternal Sister "]
+          FATHER --x MB["Maternal Brother"]
+          FATHER --x MSI["Maternal Sister"]
+
+          FBRO["Full Brother"] --x PB3["Paternal Bro."]
+          FBRO --x PS3["Paternal Sis."]
+
+          D2["2+ Daughters"] --x GD2["Granddaughter "]
+          FS22["2+ Full Sisters"] --x PS4["Paternal Sis. "]
+          MOM["Mother"] --x GM["Grandmother"]
+
+          classDef blocker fill:#be123c22,stroke:#be123c,stroke-width:2px
+          classDef blocked fill:#78716c11,stroke:#78716c,stroke-width:1px,stroke-dasharray:5 5
+
+          class SON,FATHER,FBRO,D2,FS22,MOM blocker
+          class GSON,GDAU,FB,FS2,PBR,PSI,GF,FB2,FS3,PB2,PS2,MB,MSI,PB3,PS3,GD2,PS4,GM blocked
+      </pre>
+    </div>
+
+    <div class="callout callout--ruby animate" style="--i:24">
+      <strong>Dynamic blocking:</strong> When full sisters become residuary heirs with daughters
+      (<span class="ar-label">عصبة مع الغير</span>), they additionally block paternal siblings mid-computation.
+      The <code>enforce_blocking!</code> safety net then scrubs any stale shares.
+    </div>
+
+    <!-- ═══════════ S7: SPECIAL CASES ═══════════ -->
+    <div id="s7" class="sec-head animate" style="--i:25"><span class="sec-dot" style="background:var(--amber)"></span> Special Cases</div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px;" class="animate" style="--i:26">
+      <div class="ve-card" style="border-top: 3px solid var(--ruby);">
+        <div class="ve-card__label" style="color:var(--ruby);"><span class="dot" style="background:var(--ruby)"></span> <span class="ar-label">عول</span> Awl</div>
+        <p style="font-size:14px; color:var(--text-dim); margin-bottom:8px;">
+          When total fixed shares <strong>exceed 1</strong>, all shares are proportionally reduced.
+        </p>
+        <p style="font-size:13px; color:var(--text-dim);">
+          Example: Wife (1/4) + Mother (1/6) + 2 Full Sisters (2/3) = 13/12 &gt; 1.
+          Each share shrinks by the same ratio.
+        </p>
+      </div>
+      <div class="ve-card" style="border-top: 3px solid var(--navy);">
+        <div class="ve-card__label" style="color:var(--navy);"><span class="dot" style="background:var(--navy)"></span> <span class="ar-label">رد</span> Radd</div>
+        <p style="font-size:14px; color:var(--text-dim); margin-bottom:8px;">
+          When total fixed shares <strong>fall short of 1</strong> with no residuary heirs, the surplus is redistributed to non-spouse fixed heirs.
+        </p>
+        <p style="font-size:13px; color:var(--text-dim);">
+          Spouses never receive Radd. Surplus goes proportionally to other fixed-share heirs.
+        </p>
+      </div>
+      <div class="ve-card" style="border-top: 3px solid var(--gold);">
+        <div class="ve-card__label" style="color:var(--gold);"><span class="dot" style="background:var(--gold)"></span> <span class="ar-label">العمريتان</span></div>
+        <p style="font-size:14px; color:var(--text-dim); margin-bottom:8px;">
+          When <strong>only spouse + both parents</strong> exist: mother gets <strong>1/3 of the remainder</strong> (not 1/3 of the whole estate).
+        </p>
+        <p style="font-size:13px; color:var(--text-dim);">
+          Named after the ruling of Umar ibn al-Khattab. Father takes whatever is left as residuary.
+        </p>
+      </div>
+    </div>
+
+    <!-- ═══════════ S8: RESULT BUILDER ═══════════ -->
+    <div id="s8" class="sec-head animate" style="--i:27"><span class="sec-dot" style="background:var(--navy)"></span> Result Builder <span class="ar-label" style="font-size:18px; font-weight:400; color:var(--navy);">بناء النتيجة</span></div>
+
+    <p class="sec-desc animate" style="--i:28">
+      The final stage determines which scenario applies, calculates monetary amounts, and assembles the Result struct.
+    </p>
+
+    <div class="mermaid-wrap animate" style="--i:29">
+      <div class="zoom-controls">
+        <button onclick="zoomDiagram(this, 1.2)" title="Zoom in">+</button>
+        <button onclick="zoomDiagram(this, 0.8)" title="Zoom out">&minus;</button>
+        <button onclick="resetZoom(this)" title="Reset zoom">&#8634;</button>
+      </div>
+      <div class="mermaid-label">ResultBuilder Decision Tree</div>
+      <pre class="mermaid">
+        graph TD
+          IN["fixed, reasons, residuary, blocked"] --> BASE["Calculate base denominator<br/>LCM of all share denominators"]
+          BASE --> HAS{"Has residuary<br/>heirs?"}
+
+          HAS -->|"Yes"| REMAINDER["remainder = 1 - total_fixed"]
+          REMAINDER --> SPLIT["Split remainder by<br/>count * weight"]
+          SPLIT --> OVER{"total_fixed > 1?"}
+          OVER -->|"No"| DONE["Normal case"]
+          OVER -->|"Yes, pure residuary"| NORM["Normalize fractions"]
+          OVER -->|"Yes, no pure residuary"| AWL["Awl: reduce all<br/>proportionally"]
+
+          HAS -->|"No"| CHECK{"total_fixed vs 1?"}
+          CHECK -->|"= 1"| EXACT["Exact: shares sum to 1"]
+          CHECK -->|"> 1"| AWL2["Awl: proportional<br/>reduction"]
+          CHECK -->|"< 1"| RADD["Radd: redistribute<br/>surplus to non-spouse"]
+
+          DONE --> BUILD["Build HeirShare structs<br/>Calculate amounts"]
+          NORM --> BUILD
+          AWL --> BUILD
+          EXACT --> BUILD
+          AWL2 --> BUILD
+          RADD --> BUILD
+          BUILD --> RES["Result struct"]
+
+          classDef input fill:#b5761a22,stroke:#b5761a,stroke-width:2px
+          classDef decision fill:#1e3a5f22,stroke:#1e3a5f,stroke-width:1.5px
+          classDef normal fill:#04785722,stroke:#047857,stroke-width:1.5px
+          classDef awl fill:#be123c22,stroke:#be123c,stroke-width:1.5px
+          classDef radd fill:#1e3a5f33,stroke:#1e3a5f,stroke-width:1.5px
+          classDef result fill:#04785722,stroke:#047857,stroke-width:2px
+
+          class IN,BASE input
+          class HAS,CHECK,OVER decision
+          class DONE,EXACT,SPLIT,REMAINDER,NORM normal
+          class AWL,AWL2 awl
+          class RADD radd
+          class BUILD,RES result
+      </pre>
+    </div>
+
+    <div class="callout callout--emerald animate" style="--i:30">
+      <strong>Output:</strong> The <code>Result</code> struct contains:
+      <code>heir_shares</code> (array of HeirShare with amounts, labels, reasons),
+      <code>base_denominator</code>,
+      <code>adjusted_denominator</code>,
+      <code>awl_applied</code> / <code>radd_applied</code> flags,
+      <code>estate_amount</code>,
+      <code>blocked_heirs</code>,
+      and <code>debug_info</code> for the calculation trace.
+    </div>
+
+    <div style="height: 60px;"></div>
+
+  </div><!-- /main -->
+</div><!-- /wrap -->
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  import elkLayouts from 'https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk/dist/mermaid-layout-elk.esm.min.mjs';
+
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+  mermaid.registerLayoutLoaders(elkLayouts);
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    look: 'classic',
+    layout: 'elk',
+    themeVariables: {
+      primaryColor: isDark ? '#2c2520' : '#fef9f0',
+      primaryBorderColor: isDark ? '#fbbf24' : '#b5761a',
+      primaryTextColor: isDark ? '#f5f0e8' : '#1c1917',
+      secondaryColor: isDark ? '#0c2d23' : '#ecfdf5',
+      secondaryBorderColor: isDark ? '#34d399' : '#047857',
+      secondaryTextColor: isDark ? '#f5f0e8' : '#1c1917',
+      tertiaryColor: isDark ? '#1a2540' : '#eff6ff',
+      tertiaryBorderColor: isDark ? '#93c5fd' : '#1e3a5f',
+      tertiaryTextColor: isDark ? '#f5f0e8' : '#1c1917',
+      lineColor: isDark ? '#a8a29e' : '#78716c',
+      fontSize: '14px',
+      fontFamily: "'Crimson Pro', Georgia, serif",
+      noteBkgColor: isDark ? '#2c2520' : '#fefce8',
+      noteTextColor: isDark ? '#f5f0e8' : '#1c1917',
+      noteBorderColor: isDark ? '#fbbf24' : '#b5761a',
+    }
+  });
+</script>
+<script>
+  /* Zoom controls */
+  function updateZoomState(wrap) {
+    var target = wrap.querySelector('.mermaid');
+    var zoom = parseFloat(target.dataset.zoom || '1');
+    wrap.classList.toggle('is-zoomed', zoom > 1);
+  }
+  function zoomDiagram(btn, factor) {
+    var wrap = btn.closest('.mermaid-wrap');
+    var target = wrap.querySelector('.mermaid');
+    var current = parseFloat(target.dataset.zoom || '1');
+    var next = Math.min(Math.max(current * factor, 0.3), 5);
+    target.dataset.zoom = next;
+    target.style.transform = 'scale(' + next + ')';
+    updateZoomState(wrap);
+  }
+  function resetZoom(btn) {
+    var wrap = btn.closest('.mermaid-wrap');
+    var target = wrap.querySelector('.mermaid');
+    target.dataset.zoom = '1';
+    target.style.transform = 'scale(1)';
+    updateZoomState(wrap);
+  }
+  document.querySelectorAll('.mermaid-wrap').forEach(function(wrap) {
+    wrap.addEventListener('wheel', function(e) {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      var target = wrap.querySelector('.mermaid');
+      var current = parseFloat(target.dataset.zoom || '1');
+      var factor = e.deltaY < 0 ? 1.1 : 0.9;
+      var next = Math.min(Math.max(current * factor, 0.3), 5);
+      target.dataset.zoom = next;
+      target.style.transform = 'scale(' + next + ')';
+      updateZoomState(wrap);
+    }, { passive: false });
+    var startX, startY, scrollL, scrollT;
+    wrap.addEventListener('mousedown', function(e) {
+      if (e.target.closest('.zoom-controls')) return;
+      var target = wrap.querySelector('.mermaid');
+      if (parseFloat(target.dataset.zoom || '1') <= 1) return;
+      wrap.classList.add('is-panning');
+      startX = e.clientX; startY = e.clientY;
+      scrollL = wrap.scrollLeft; scrollT = wrap.scrollTop;
+    });
+    window.addEventListener('mousemove', function(e) {
+      if (!wrap.classList.contains('is-panning')) return;
+      wrap.scrollLeft = scrollL - (e.clientX - startX);
+      wrap.scrollTop = scrollT - (e.clientY - startY);
+    });
+    window.addEventListener('mouseup', function() {
+      wrap.classList.remove('is-panning');
+    });
+  });
+
+  /* Scroll spy for TOC */
+  (function() {
+    const toc = document.getElementById('toc');
+    const links = toc.querySelectorAll('a');
+    const sections = [];
+    links.forEach(link => {
+      const id = link.getAttribute('href').slice(1);
+      const el = document.getElementById(id);
+      if (el) sections.push({ id, el, link });
+    });
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          links.forEach(l => l.classList.remove('active'));
+          const match = sections.find(s => s.el === entry.target);
+          if (match) {
+            match.link.classList.add('active');
+            if (window.innerWidth <= 1000) {
+              match.link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+          }
+        }
+      });
+    }, { rootMargin: '-10% 0px -80% 0px' });
+    sections.forEach(s => observer.observe(s.el));
+    links.forEach(link => {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        const id = link.getAttribute('href').slice(1);
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          history.replaceState(null, '', '#' + id);
+        }
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

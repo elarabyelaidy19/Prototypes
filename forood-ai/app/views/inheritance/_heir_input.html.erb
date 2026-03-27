@@ -1,0 +1,32 @@
+<div class="heir-row" data-inheritance-form-target="heirRow" data-heir="<%= name %>">
+  <label for="heirs_<%= name %>" class="heir-row__label"><%= label %></label>
+  <div class="heir-row__controls">
+    <button type="button"
+            data-action="click->inheritance-form#decrement"
+            data-target-input="heirs_<%= name %>"
+            class="heir-btn heir-btn--dec"
+            tabindex="-1"
+            aria-label="<%= label %> — إنقاص">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/></svg>
+    </button>
+    <input type="number"
+           name="heirs[<%= name %>]"
+           id="heirs_<%= name %>"
+           value="<%= default %>"
+           min="0"
+           max="<%= max %>"
+           class="heir-input"
+           data-inheritance-form-target="heirInput"
+           data-action="input->inheritance-form#inputChanged"
+           data-heir-name="<%= name %>">
+    <button type="button"
+            data-action="click->inheritance-form#increment"
+            data-target-input="heirs_<%= name %>"
+            data-max="<%= max %>"
+            class="heir-btn heir-btn--inc"
+            tabindex="-1"
+            aria-label="<%= label %> — زيادة">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+  </div>
+</div>

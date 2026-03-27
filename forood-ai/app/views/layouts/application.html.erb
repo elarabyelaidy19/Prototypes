@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+  <head>
+    <title><%= content_for(:title) || t("app.name") + " — " + t("app.tagline") %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="<%= t('app.name') %>">
+    <meta name="description" content="<%= t('app.description') %>">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0B3D2E">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-pattern"></div>
+      <div class="app-header__inner">
+        <div class="app-header__brand">
+          <div class="app-header__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          </div>
+          <div>
+            <div class="app-header__title"><%= t("app.name") %></div>
+            <div class="app-header__subtitle"><%= t("app.tagline") %></div>
+          </div>
+        </div>
+        <span class="app-header__tagline"><%= t("app.description") %></span>
+      </div>
+    </header>
+    <div class="header-accent"></div>
+
+    <!-- Main content -->
+    <main class="main-container">
+      <%= yield %>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="app-footer__gold">
+        <span class="app-footer__dot"></span>
+      </div>
+      <p><%= t("app.name") %> — <%= t("app.tagline") %> | <%= t("app.footer") %></p>
+    </footer>
+  </body>
+</html>
