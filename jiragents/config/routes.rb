@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  root "dashboard#index"
+
   resources :agents, only: [:index, :new, :create, :show]
   resources :tasks, only: [:index, :new, :create, :show]
 
