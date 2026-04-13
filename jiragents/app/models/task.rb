@@ -1,6 +1,8 @@
 class Task < ApplicationRecord
   belongs_to :agent
 
+  broadcasts_refreshes
+
   enum :status, { pending: "pending", running: "running", completed: "completed", failed: "failed" }
 
   validates :title, presence: true
