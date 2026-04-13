@@ -1,0 +1,32 @@
+<div class="max-w-4xl mx-auto py-8 px-4">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Agents</h1>
+    <%= link_to "New Agent", new_agent_path,
+        class: "bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition" %>
+  </div>
+
+  <% if @agents.any? %>
+    <div class="grid gap-4">
+      <% @agents.each do |agent| %>
+        <%= link_to agent_path(agent), class: "block bg-white rounded-lg shadow p-6 hover:shadow-md transition" do %>
+          <div class="flex justify-between items-start">
+            <div>
+              <h2 class="text-xl font-semibold text-gray-900"><%= agent.name %></h2>
+              <p class="text-gray-600 mt-1"><%= agent.description %></p>
+            </div>
+            <% if defined?(Task) %>
+              <span class="bg-gray-100 text-gray-700 text-sm px-3 py-1 rounded-full">
+                <%= pluralize(agent.tasks.count, "task") %>
+              </span>
+            <% end %>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="text-center py-12 text-gray-500">
+      <p class="text-lg">No agents yet.</p>
+      <p class="mt-2"><%= link_to "Create your first agent", new_agent_path, class: "text-indigo-600 hover:underline" %></p>
+    </div>
+  <% end %>
+</div>

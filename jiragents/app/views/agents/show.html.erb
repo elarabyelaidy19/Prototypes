@@ -1,0 +1,16 @@
+<div class="max-w-4xl mx-auto py-8 px-4">
+  <div class="mb-6">
+    <%= link_to "&larr; All Agents".html_safe, agents_path, class: "text-indigo-600 hover:underline" %>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6 mb-8">
+    <h1 class="text-3xl font-bold text-gray-900"><%= @agent.name %></h1>
+    <p class="text-gray-600 mt-2"><%= @agent.description %></p>
+  </div>
+
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-semibold text-gray-900">Tasks</h2>
+  </div>
+
+  <p class="text-gray-500 text-center py-8">Tasks will appear here once implemented.</p>
+</div>
