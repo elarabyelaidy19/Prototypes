@@ -12,7 +12,7 @@ class TasksController < ApplicationController
 
   def new
     @agents = Agent.order(:name)
-    @task = Task.new(agent_id: params[:agent_id])
+    @task = Task.new(agent_id: params[:agent_id], working_directory: Rails.root.to_s)
   end
 
   def create

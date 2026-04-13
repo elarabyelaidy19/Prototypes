@@ -1,14 +1,13 @@
 class AgentExecutionJob < ApplicationJob
   queue_as :default
 
-  WORKTREE_BASE = "/tmp/jiragents-worktrees"
-
   def perform(task_id)
     task = Task.find(task_id)
     task.update!(status: :running, started_at: Time.current)
 
-    worktree_path = File.join(WORKTREE_BASE, "task-#{task.id}")
-    FileUtils.mkdir_p(WORKTREE_BASE)
+    worktrees_base = File.join(task.working_directory, ".worktrees")
+    worktree_path = File.join(worktrees_base, "task-#{task.id}")
+    FileUtils.mkdir_p(worktrees_base)
 
     create_worktree(task, worktree_path)
     result = run_claude(task, worktree_path)
