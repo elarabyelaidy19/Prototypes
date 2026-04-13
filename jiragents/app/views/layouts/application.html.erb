@@ -1,42 +1,58 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) || "Jiragents" %></title>
+    <title><%= content_for(:title) || "JirAgents" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Jiragents">
+    <meta name="application-name" content="JirAgents">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
     <%= yield :head %>
 
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="bg-gray-50 min-h-screen">
-    <nav class="bg-white shadow-sm border-b border-gray-200">
-      <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-        <%= link_to "JirAgents", root_path, class: "text-xl font-bold text-indigo-600" %>
-        <div class="flex gap-6">
-          <%= link_to "Dashboard", root_path, class: "text-gray-600 hover:text-gray-900 text-sm" %>
-          <%= link_to "Agents", agents_path, class: "text-gray-600 hover:text-gray-900 text-sm" %>
-          <%= link_to "Tasks", tasks_path, class: "text-gray-600 hover:text-gray-900 text-sm" %>
-          <%= link_to "New Task", new_task_path, class: "bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition text-sm" %>
+  <body class="bg-canvas min-h-screen dot-grid">
+    <nav class="bg-white/80 backdrop-blur-md border-b border-edge-subtle sticky top-0 z-50">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center shadow-sm">
+            <span class="text-white text-sm font-extrabold tracking-tight">J</span>
+          </div>
+          <%= link_to "JirAgents", root_path, class: "text-lg font-bold text-gray-900 tracking-tight" %>
+        </div>
+        <div class="flex items-center gap-8">
+          <%= link_to "Dashboard", root_path,
+              class: "nav-link #{current_page?(root_path) ? 'nav-link-active' : ''}",
+              "aria-current": (current_page?(root_path) ? "page" : nil) %>
+          <%= link_to "Agents", agents_path,
+              class: "nav-link #{current_page?(agents_path) ? 'nav-link-active' : ''}",
+              "aria-current": (current_page?(agents_path) ? "page" : nil) %>
+          <%= link_to "Tasks", tasks_path,
+              class: "nav-link #{current_page?(tasks_path) ? 'nav-link-active' : ''}",
+              "aria-current": (current_page?(tasks_path) ? "page" : nil) %>
+          <%= link_to new_task_path, class: "btn-primary" do %>
+            <svg class="icon-inline" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            New Task
+          <% end %>
         </div>
       </div>
     </nav>
 
-    <main>
+    <main class="animate-fade-in">
       <%= yield %>
     </main>
   </body>

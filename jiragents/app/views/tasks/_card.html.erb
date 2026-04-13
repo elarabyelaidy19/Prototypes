@@ -1,9 +1,15 @@
-<%= link_to task_path(task), class: "block bg-white rounded-lg shadow p-4 hover:shadow-md transition" do %>
-  <div class="flex justify-between items-start">
+<%= link_to task_path(task), class: "card block p-4 min-h-[56px] #{task.status == 'running' ? 'card-running' : ''}" do %>
+  <div class="flex justify-between items-center py-0.5">
     <div class="flex-1 min-w-0">
-      <h3 class="text-lg font-semibold text-gray-900 truncate"><%= task.title %></h3>
-      <p class="text-sm text-gray-500 mt-1">
-        Assigned to <span class="font-medium text-gray-700"><%= task.agent.name %></span>
+      <h3 class="text-base font-semibold text-gray-900 truncate"><%= task.title %></h3>
+      <p class="text-sm text-gray-500 mt-0.5">
+        <% if task.agent %>
+          <span class="text-gray-600"><%= task.agent.name %></span>
+        <% else %>
+          <span class="text-amber-600 font-medium text-xs">Unassigned</span>
+        <% end %>
+        <span class="text-gray-300 mx-1">&middot;</span>
+        <span class="text-gray-500 text-xs"><%= time_ago_in_words(task.created_at) %> ago</span>
       </p>
     </div>
     <div class="ml-4 flex-shrink-0">

@@ -1,30 +1,48 @@
-<div class="max-w-4xl mx-auto py-8 px-4">
-  <div class="flex justify-between items-center mb-8">
-    <h1 class="text-3xl font-bold text-gray-900">Agents</h1>
-    <%= link_to "New Agent", new_agent_path,
-        class: "bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition" %>
+<div class="max-w-5xl mx-auto py-10 px-4 sm:px-6">
+  <div class="flex justify-between items-center mb-10">
+    <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Agents</h1>
+    <%= link_to new_agent_path, class: "btn-primary" do %>
+      <svg class="icon-inline" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      New Agent
+    <% end %>
   </div>
 
   <% if @agents.any? %>
     <div class="grid gap-4">
-      <% @agents.each do |agent| %>
-        <%= link_to agent_path(agent), class: "block bg-white rounded-lg shadow p-6 hover:shadow-md transition" do %>
-          <div class="flex justify-between items-start">
-            <div>
-              <h2 class="text-xl font-semibold text-gray-900"><%= agent.name %></h2>
-              <p class="text-gray-600 mt-1"><%= agent.description %></p>
+      <% @agents.each_with_index do |agent, i| %>
+        <div class="animate-slide-up delay-<%= [i + 1, 5].min %>">
+          <%= link_to agent_path(agent), class: "card block p-5" do %>
+            <div class="flex justify-between items-start">
+              <div class="flex items-start gap-4">
+                <div class="agent-avatar agent-avatar-sm" style="<%= agent_avatar_style(agent.name) %>">
+                  <%= agent.name[0].upcase %>
+                </div>
+                <div>
+                  <h2 class="text-lg font-semibold text-gray-900"><%= agent.name %></h2>
+                  <p class="text-gray-500 mt-0.5 text-sm leading-relaxed"><%= agent.description %></p>
+                </div>
+              </div>
+              <span class="text-xs text-gray-500 font-mono bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-full whitespace-nowrap">
+                <%= pluralize(agent.tasks.size, "task") %>
+              </span>
             </div>
-            <span class="bg-gray-100 text-gray-700 text-sm px-3 py-1 rounded-full">
-              <%= pluralize(agent.tasks.size, "task") %>
-            </span>
-          </div>
-        <% end %>
+          <% end %>
+        </div>
       <% end %>
     </div>
   <% else %>
-    <div class="text-center py-12 text-gray-500">
-      <p class="text-lg">No agents yet.</p>
-      <p class="mt-2"><%= link_to "Create your first agent", new_agent_path, class: "text-indigo-600 hover:underline" %></p>
+    <div class="card p-16 text-center">
+      <div class="w-12 h-12 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center mx-auto mb-4">
+        <svg width="20" height="20" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M7 1v12M1 7h12" stroke="#14b8a6" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <p class="text-gray-700 font-semibold">No agents yet</p>
+      <p class="text-gray-500 mt-1 text-sm">
+        <%= link_to "Create your first agent", new_agent_path, class: "text-teal-600 hover:text-teal-700 font-medium transition" %>
+      </p>
     </div>
   <% end %>
 </div>

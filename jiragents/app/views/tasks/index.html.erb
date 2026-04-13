@@ -1,28 +1,36 @@
 <%= turbo_stream_from "tasks" %>
 
-<div class="max-w-4xl mx-auto py-8 px-4">
-  <div class="flex justify-between items-center mb-8">
-    <h1 class="text-3xl font-bold text-gray-900">Tasks</h1>
-    <%= link_to "New Task", new_task_path,
-        class: "bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition" %>
-  </div>
-
-  <div class="flex gap-2 mb-4">
-    <%= link_to "All", tasks_path,
-        class: "px-3 py-1 rounded-full text-sm #{params[:status].blank? ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}" %>
-    <% %w[pending running completed failed].each do |status| %>
-      <%= link_to status.capitalize, tasks_path(status: status),
-          class: "px-3 py-1 rounded-full text-sm #{params[:status] == status ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}" %>
+<div class="max-w-5xl mx-auto py-10 px-4 sm:px-6">
+  <div class="flex justify-between items-center mb-10">
+    <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Tasks</h1>
+    <%= link_to new_task_path, class: "btn-primary" do %>
+      <svg class="icon-inline" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      New Task
     <% end %>
   </div>
 
-  <div class="flex gap-2 mb-6 items-center">
-    <span class="text-sm text-gray-500">Agent:</span>
+  <div class="flex flex-wrap gap-2 mb-3 items-center">
+    <span class="text-sm text-gray-500 font-medium w-14 shrink-0">Status:</span>
+    <%= link_to "All", tasks_path,
+        class: "filter-pill #{params[:status].blank? ? 'filter-pill-active' : 'filter-pill-inactive'}" %>
+    <% %w[pending running completed failed].each do |status| %>
+      <%= link_to tasks_path(status: status),
+          class: "filter-pill #{params[:status] == status ? 'filter-pill-active' : 'filter-pill-inactive'}" do %>
+        <%= status.capitalize %>
+        <span class="ml-0.5 opacity-60"><%= @tasks_by_status[status] || 0 %></span>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div class="flex flex-wrap gap-2 mb-8 items-center">
+    <span class="text-sm text-gray-500 font-medium w-14 shrink-0">Agent:</span>
     <%= link_to "All", tasks_path(status: params[:status]),
-        class: "px-3 py-1 rounded-full text-sm #{params[:agent_id].blank? ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}" %>
+        class: "filter-pill #{params[:agent_id].blank? ? 'filter-pill-active' : 'filter-pill-inactive'}" %>
     <% @agents.each do |agent| %>
       <%= link_to agent.name, tasks_path(agent_id: agent.id, status: params[:status]),
-          class: "px-3 py-1 rounded-full text-sm #{params[:agent_id] == agent.id.to_s ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}" %>
+          class: "filter-pill #{params[:agent_id] == agent.id.to_s ? 'filter-pill-active' : 'filter-pill-inactive'}" %>
     <% end %>
   </div>
 
@@ -32,7 +40,9 @@
         <%= render "tasks/card", task: task %>
       <% end %>
     <% else %>
-      <p class="text-gray-500 text-center py-12">No tasks found.</p>
+      <div class="card p-16 text-center">
+        <p class="text-gray-500 text-lg">No tasks found</p>
+      </div>
     <% end %>
   </div>
 </div>

@@ -1,64 +1,90 @@
 <%= turbo_stream_from @task %>
 
-<div class="max-w-4xl mx-auto py-8 px-4">
+<div class="max-w-5xl mx-auto py-10 px-4 sm:px-6">
   <div class="mb-6">
-    <%= link_to "← All Tasks", tasks_path, class: "text-indigo-600 hover:underline" %>
+    <%= link_to "All Tasks", tasks_path, class: "back-link" %>
   </div>
 
-  <div id="<%= dom_id(@task) %>" class="bg-white rounded-lg shadow p-6">
-    <div class="flex justify-between items-start mb-4">
-      <h1 class="text-3xl font-bold text-gray-900"><%= @task.title %></h1>
+  <div id="<%= dom_id(@task) %>" class="card p-6">
+    <div class="flex justify-between items-start mb-6">
+      <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight"><%= @task.title %></h1>
       <%= task_status_badge(@task.status) %>
     </div>
 
-    <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-6">
-      <div>
-        <span class="font-medium text-gray-700">Agent:</span>
-        <%= link_to @task.agent.name, agent_path(@task.agent), class: "text-indigo-600 hover:underline" %>
+    <% unless @task.assigned? %>
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-6">
+        <p class="text-amber-800 font-semibold text-sm mb-3">No agent assigned — assign one to start execution</p>
+        <%= form_with(model: @task, class: "flex items-end gap-3") do |form| %>
+          <div class="flex-1">
+            <%= form.collection_select :agent_id, @agents, :id, :name,
+                { prompt: "Select an agent..." },
+                { class: "input-field" } %>
+          </div>
+          <%= form.submit "Assign & Run", class: "btn-primary whitespace-nowrap" %>
+        <% end %>
       </div>
-      <div>
-        <span class="font-medium text-gray-700">Working Directory:</span>
-        <code class="text-xs bg-gray-100 px-2 py-1 rounded"><%= @task.working_directory %></code>
-      </div>
+    <% end %>
+
+    <div class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-sm mb-6 pb-6 border-b border-gray-100 sm:grid-cols-[auto_1fr_auto_1fr]">
+      <% if @task.agent %>
+        <span class="text-gray-500 font-medium">Agent</span>
+        <div><%= link_to @task.agent.name, agent_path(@task.agent), class: "text-teal-600 hover:text-teal-700 transition font-medium" %></div>
+      <% end %>
+
+      <span class="text-gray-500 font-medium">Directory</span>
+      <div class="min-w-0"><span class="meta-tag truncate block"><%= @task.working_directory %></span></div>
+
       <% if @task.branch_name.present? %>
-        <div>
-          <span class="font-medium text-gray-700">Branch:</span>
-          <code class="text-xs bg-gray-100 px-2 py-1 rounded"><%= @task.branch_name %></code>
-        </div>
+        <span class="text-gray-500 font-medium">Branch</span>
+        <div><span class="meta-tag"><%= @task.branch_name %></span></div>
       <% end %>
+
       <% if @task.started_at.present? %>
-        <div>
-          <span class="font-medium text-gray-700">Started:</span>
-          <%= @task.started_at.strftime("%Y-%m-%d %H:%M") %>
-        </div>
+        <span class="text-gray-500 font-medium">Started</span>
+        <div><span class="text-gray-600 font-mono text-xs"><%= @task.started_at.strftime("%Y-%m-%d %H:%M") %></span></div>
       <% end %>
+
       <% if @task.running? %>
+        <span class="text-gray-500 font-medium">Elapsed</span>
         <div>
-          <span class="font-medium text-gray-700">Running for:</span>
-          <span id="elapsed-timer" class="text-blue-600 font-mono"
+          <span class="text-teal-600 font-mono text-xs font-bold"
                 data-controller="elapsed-timer"
                 data-started="<%= @task.started_at.to_i %>"></span>
         </div>
       <% end %>
+
       <% if @task.completed_at.present? %>
-        <div>
-          <span class="font-medium text-gray-700">Completed:</span>
-          <%= @task.completed_at.strftime("%Y-%m-%d %H:%M") %>
-        </div>
+        <span class="text-gray-500 font-medium">Completed</span>
+        <div><span class="text-gray-600 font-mono text-xs"><%= @task.completed_at.strftime("%Y-%m-%d %H:%M") %></span></div>
       <% end %>
     </div>
 
     <% if @task.description.present? %>
       <div class="mb-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-2">Description</h2>
-        <div class="bg-gray-50 rounded-lg p-4 text-gray-700 whitespace-pre-wrap"><%= @task.description %></div>
+        <h2 class="section-label mb-3">Description</h2>
+        <div class="bg-panel border border-edge rounded-xl p-4 text-gray-700 text-sm leading-relaxed whitespace-pre-wrap"><%= @task.description %></div>
       </div>
     <% end %>
 
     <% if @task.result.present? %>
       <div>
-        <h2 class="text-lg font-semibold text-gray-900 mb-2">Result</h2>
-        <div class="bg-gray-900 text-green-400 rounded-lg p-4 font-mono text-sm whitespace-pre-wrap overflow-x-auto"><%= @task.result %></div>
+        <h2 class="section-label mb-3">Output</h2>
+        <div class="terminal">
+          <div class="terminal-header">
+            <span class="terminal-dot" style="background:#ff5f57"></span>
+            <span class="terminal-dot" style="background:#febc2e"></span>
+            <span class="terminal-dot" style="background:#28c840"></span>
+            <span class="font-mono text-xs text-slate-500 ml-2 flex-1">output</span>
+            <button class="terminal-copy"
+                    type="button"
+                    data-controller="clipboard"
+                    data-clipboard-target-value="#task-output-<%= @task.id %>"
+                    data-action="click->clipboard#copy">
+              Copy
+            </button>
+          </div>
+          <div class="terminal-body" id="task-output-<%= @task.id %>"><%= @task.result %></div>
+        </div>
       </div>
     <% end %>
   </div>

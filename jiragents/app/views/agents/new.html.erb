@@ -1,9 +1,11 @@
-<div class="max-w-2xl mx-auto py-8 px-4">
+<div class="max-w-2xl mx-auto py-10 px-4 sm:px-6">
   <div class="mb-6">
-    <%= link_to "← All Agents", agents_path, class: "text-indigo-600 hover:underline" %>
+    <%= link_to "All Agents", agents_path, class: "back-link" %>
   </div>
 
-  <h1 class="text-3xl font-bold text-gray-900 mb-8">New Agent</h1>
+  <h1 class="text-3xl font-extrabold text-gray-900 mb-6 tracking-tight">New Agent</h1>
 
-  <%= render "form", agent: @agent %>
+  <div class="card p-6">
+    <%= render "form", agent: @agent %>
+  </div>
 </div>

@@ -7,6 +7,8 @@
 !/log/.keep
 !/tmp/.keep
 
+/.playwright-mcp/*
+
 # Ignore pidfiles
 /tmp/pids/*
 !/tmp/pids/.keep

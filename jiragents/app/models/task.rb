@@ -1,5 +1,5 @@
 class Task < ApplicationRecord
-  belongs_to :agent
+  belongs_to :agent, optional: true
 
   broadcasts_refreshes
 
@@ -8,16 +8,21 @@ class Task < ApplicationRecord
   validates :title, presence: true
   validates :working_directory, presence: true
 
-  after_create :set_branch_name
-  after_create_commit :enqueue_execution
+  after_create_commit :start_execution, if: :agent_id?
+
+  def assign_agent!(agent)
+    update!(agent: agent, branch_name: "agent/#{agent.name.parameterize}/#{id}")
+    AgentExecutionJob.perform_later(id)
+  end
+
+  def assigned?
+    agent_id.present?
+  end
 
   private
 
-  def set_branch_name
+  def start_execution
     update_column(:branch_name, "agent/#{agent.name.parameterize}/#{id}")
-  end
-
-  def enqueue_execution
     AgentExecutionJob.perform_later(id)
   end
 end

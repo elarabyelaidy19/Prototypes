@@ -1,28 +1,38 @@
 <%= turbo_stream_from "tasks" %>
 
-<div class="max-w-4xl mx-auto py-8 px-4">
+<div class="max-w-5xl mx-auto py-10 px-4 sm:px-6">
   <div class="mb-6">
-    <%= link_to "← All Agents", agents_path, class: "text-indigo-600 hover:underline" %>
+    <%= link_to "All Agents", agents_path, class: "back-link" %>
   </div>
 
-  <div class="bg-white rounded-lg shadow p-6 mb-8">
-    <h1 class="text-3xl font-bold text-gray-900"><%= @agent.name %></h1>
-    <p class="text-gray-600 mt-2"><%= @agent.description %></p>
-  </div>
-
-  <div class="flex justify-between items-center mb-4">
-    <h2 class="text-xl font-semibold text-gray-900">Tasks</h2>
-    <%= link_to "Assign Task", new_task_path(agent_id: @agent.id),
-        class: "bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition" %>
-  </div>
-
-  <% if @tasks.any? %>
-    <div class="space-y-3">
-      <% @tasks.each do |task| %>
-        <%= render "tasks/card", task: task %>
-      <% end %>
+  <div class="card p-6 mb-8">
+    <div class="flex items-start gap-4">
+      <div class="agent-avatar agent-avatar-md" style="<%= agent_avatar_style(@agent.name) %>">
+        <%= @agent.name[0].upcase %>
+      </div>
+      <div>
+        <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight"><%= @agent.name %></h1>
+        <p class="text-gray-500 mt-1.5 leading-relaxed"><%= @agent.description %></p>
+      </div>
     </div>
-  <% else %>
-    <p class="text-gray-500 text-center py-8">No tasks assigned to this agent yet.</p>
-  <% end %>
+  </div>
+
+  <div class="bg-panel rounded-2xl p-5 border border-edge-subtle">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="section-label">Tasks</h2>
+      <%= link_to "Assign Task", new_task_path(agent_id: @agent.id), class: "btn-primary" %>
+    </div>
+
+    <% if @tasks.any? %>
+      <div class="space-y-3">
+        <% @tasks.each do |task| %>
+          <%= render "tasks/card", task: task %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="text-center py-8">
+        <p class="text-gray-500">No tasks assigned to this agent yet.</p>
+      </div>
+    <% end %>
+  </div>
 </div>

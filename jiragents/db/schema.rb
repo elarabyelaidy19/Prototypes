@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_13_184500) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_13_201800) do
   create_table "agents", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -20,7 +20,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_13_184500) do
   end
 
   create_table "tasks", force: :cascade do |t|
-    t.integer "agent_id", null: false
+    t.integer "agent_id"
     t.string "branch_name"
     t.datetime "completed_at"
     t.datetime "created_at", null: false
