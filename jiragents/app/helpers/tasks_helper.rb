@@ -8,6 +8,12 @@ module TasksHelper
 
   def task_status_badge(status)
     classes = STATUS_STYLES.fetch(status, "bg-gray-100 text-gray-700")
-    tag.span(status.capitalize, class: "text-sm font-medium px-3 py-1 rounded-full #{classes}")
+    if status == "running"
+      tag.span(class: "inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1 rounded-full #{classes} animate-pulse") do
+        tag.span("●", class: "text-blue-500") + tag.span("Running")
+      end
+    else
+      tag.span(status.capitalize, class: "text-sm font-medium px-3 py-1 rounded-full #{classes}")
+    end
   end
 end

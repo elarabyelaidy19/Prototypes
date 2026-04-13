@@ -32,6 +32,14 @@
           <%= @task.started_at.strftime("%Y-%m-%d %H:%M") %>
         </div>
       <% end %>
+      <% if @task.running? %>
+        <div>
+          <span class="font-medium text-gray-700">Running for:</span>
+          <span id="elapsed-timer" class="text-blue-600 font-mono"
+                data-controller="elapsed-timer"
+                data-started="<%= @task.started_at.to_i %>"></span>
+        </div>
+      <% end %>
       <% if @task.completed_at.present? %>
         <div>
           <span class="font-medium text-gray-700">Completed:</span>
