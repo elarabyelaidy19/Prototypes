@@ -16,7 +16,7 @@
             </div>
             <% if defined?(Task) %>
               <span class="bg-gray-100 text-gray-700 text-sm px-3 py-1 rounded-full">
-                <%= pluralize(agent.tasks.count, "task") %>
+                <%= pluralize(agent.tasks.size, "task") %>
               </span>
             <% end %>
           </div>
