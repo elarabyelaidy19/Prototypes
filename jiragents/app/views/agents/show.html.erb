@@ -10,7 +10,17 @@
 
   <div class="flex justify-between items-center mb-4">
     <h2 class="text-xl font-semibold text-gray-900">Tasks</h2>
+    <%= link_to "Assign Task", new_task_path(agent_id: @agent.id),
+        class: "bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition" %>
   </div>
 
-  <p class="text-gray-500 text-center py-8">Tasks will appear here once implemented.</p>
+  <% if @tasks.any? %>
+    <div class="space-y-3">
+      <% @tasks.each do |task| %>
+        <p class="text-gray-700">Task: <%= task.title %></p>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-gray-500 text-center py-8">No tasks assigned to this agent yet.</p>
+  <% end %>
 </div>

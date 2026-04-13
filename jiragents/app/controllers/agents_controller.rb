@@ -1,12 +1,11 @@
 class AgentsController < ApplicationController
   def index
-    scope = Agent.order(created_at: :desc)
-    scope = scope.includes(:tasks) if defined?(Task)
-    @agents = scope
+    @agents = Agent.includes(:tasks).order(created_at: :desc)
   end
 
   def show
     @agent = Agent.find(params[:id])
+    @tasks = @agent.tasks.order(created_at: :desc)
   end
 
   def new

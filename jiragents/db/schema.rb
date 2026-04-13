@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_13_183934) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_13_184500) do
   create_table "agents", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -18,4 +18,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_13_183934) do
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_agents_on_name", unique: true
   end
+
+  create_table "tasks", force: :cascade do |t|
+    t.integer "agent_id", null: false
+    t.string "branch_name"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.text "result"
+    t.datetime "started_at"
+    t.string "status", default: "pending", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.string "working_directory", null: false
+    t.index ["agent_id"], name: "index_tasks_on_agent_id"
+    t.index ["status"], name: "index_tasks_on_status"
+  end
+
+  add_foreign_key "tasks", "agents"
 end
