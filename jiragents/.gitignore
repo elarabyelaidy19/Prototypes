@@ -1,0 +1,44 @@
+# Ignore bundler config
+/.bundle
+
+# Ignore all logfiles and tempfiles
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+
+# Ignore pidfiles
+/tmp/pids/*
+!/tmp/pids/.keep
+
+# Ignore storage (uploaded files, SQLite DBs)
+/storage/*
+!/storage/.keep
+
+# Ignore assets build output
+/app/assets/builds/*
+!/app/assets/builds/.keep
+
+# Ignore bootsnap cache
+/tmp/cache/bootsnap*
+
+# Ignore node_modules
+/node_modules
+
+# Ignore yarn files
+/yarn-error.log
+yarn-debug.log*
+
+# Ignore environment files
+.env
+.env.*
+!.env.example
+
+# Ignore test coverage
+/coverage
+
+# Ignore system test screenshots
+/tmp/screenshots
+
+# macOS
+.DS_Store
