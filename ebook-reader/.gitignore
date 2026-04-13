@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+uploads/
+.cache/
+ebook_reader.db
+.env

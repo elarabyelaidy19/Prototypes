@@ -1,0 +1,15 @@
+{
+  "name": "claude-agent-sdk-intro",
+  "version": "1.0.0",
+  "description": "Introduction to Claude Agent SDK with runnable examples",
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "latest"
+  },
+  "devDependencies": {
+    "tsx": "latest"
+  },
+  "scripts": {
+    "example:web-researcher": "tsx examples/05_web_researcher.ts"
+  }
+}
