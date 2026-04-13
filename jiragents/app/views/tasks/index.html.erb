@@ -5,12 +5,22 @@
         class: "bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition" %>
   </div>
 
-  <div class="flex gap-2 mb-6">
+  <div class="flex gap-2 mb-4">
     <%= link_to "All", tasks_path,
         class: "px-3 py-1 rounded-full text-sm #{params[:status].blank? ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}" %>
     <% %w[pending running completed failed].each do |status| %>
       <%= link_to status.capitalize, tasks_path(status: status),
           class: "px-3 py-1 rounded-full text-sm #{params[:status] == status ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}" %>
+    <% end %>
+  </div>
+
+  <div class="flex gap-2 mb-6 items-center">
+    <span class="text-sm text-gray-500">Agent:</span>
+    <%= link_to "All", tasks_path(status: params[:status]),
+        class: "px-3 py-1 rounded-full text-sm #{params[:agent_id].blank? ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}" %>
+    <% @agents.each do |agent| %>
+      <%= link_to agent.name, tasks_path(agent_id: agent.id, status: params[:status]),
+          class: "px-3 py-1 rounded-full text-sm #{params[:agent_id] == agent.id.to_s ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}" %>
     <% end %>
   </div>
 
