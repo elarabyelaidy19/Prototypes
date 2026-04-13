@@ -1,0 +1,55 @@
+<div class="max-w-4xl mx-auto py-8 px-4">
+  <div class="mb-6">
+    <%= link_to "← All Tasks", tasks_path, class: "text-indigo-600 hover:underline" %>
+  </div>
+
+  <div id="<%= dom_id(@task) %>" class="bg-white rounded-lg shadow p-6">
+    <div class="flex justify-between items-start mb-4">
+      <h1 class="text-3xl font-bold text-gray-900"><%= @task.title %></h1>
+      <%= task_status_badge(@task.status) %>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-6">
+      <div>
+        <span class="font-medium text-gray-700">Agent:</span>
+        <%= link_to @task.agent.name, agent_path(@task.agent), class: "text-indigo-600 hover:underline" %>
+      </div>
+      <div>
+        <span class="font-medium text-gray-700">Working Directory:</span>
+        <code class="text-xs bg-gray-100 px-2 py-1 rounded"><%= @task.working_directory %></code>
+      </div>
+      <% if @task.branch_name.present? %>
+        <div>
+          <span class="font-medium text-gray-700">Branch:</span>
+          <code class="text-xs bg-gray-100 px-2 py-1 rounded"><%= @task.branch_name %></code>
+        </div>
+      <% end %>
+      <% if @task.started_at.present? %>
+        <div>
+          <span class="font-medium text-gray-700">Started:</span>
+          <%= @task.started_at.strftime("%Y-%m-%d %H:%M") %>
+        </div>
+      <% end %>
+      <% if @task.completed_at.present? %>
+        <div>
+          <span class="font-medium text-gray-700">Completed:</span>
+          <%= @task.completed_at.strftime("%Y-%m-%d %H:%M") %>
+        </div>
+      <% end %>
+    </div>
+
+    <% if @task.description.present? %>
+      <div class="mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-2">Description</h2>
+        <div class="bg-gray-50 rounded-lg p-4 text-gray-700 whitespace-pre-wrap"><%= @task.description %></div>
+      </div>
+    <% end %>
+
+    <% if @task.result.present? %>
+      <div>
+        <h2 class="text-lg font-semibold text-gray-900 mb-2">Result</h2>
+        <div class="bg-gray-900 text-green-400 rounded-lg p-4 font-mono text-sm whitespace-pre-wrap overflow-x-auto"><%= @task.result %></div>
+      </div>
+    <% end %>
+  </div>
+</div>

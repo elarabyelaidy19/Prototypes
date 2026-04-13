@@ -1,0 +1,26 @@
+<div class="max-w-4xl mx-auto py-8 px-4">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Tasks</h1>
+    <%= link_to "New Task", new_task_path,
+        class: "bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition" %>
+  </div>
+
+  <div class="flex gap-2 mb-6">
+    <%= link_to "All", tasks_path,
+        class: "px-3 py-1 rounded-full text-sm #{params[:status].blank? ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}" %>
+    <% %w[pending running completed failed].each do |status| %>
+      <%= link_to status.capitalize, tasks_path(status: status),
+          class: "px-3 py-1 rounded-full text-sm #{params[:status] == status ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}" %>
+    <% end %>
+  </div>
+
+  <div id="tasks" class="space-y-3">
+    <% if @tasks.any? %>
+      <% @tasks.each do |task| %>
+        <%= render "tasks/card", task: task %>
+      <% end %>
+    <% else %>
+      <p class="text-gray-500 text-center py-12">No tasks found.</p>
+    <% end %>
+  </div>
+</div>

@@ -17,7 +17,7 @@
   <% if @tasks.any? %>
     <div class="space-y-3">
       <% @tasks.each do |task| %>
-        <p class="text-gray-700">Task: <%= task.title %></p>
+        <%= render "tasks/card", task: task %>
       <% end %>
     </div>
   <% else %>
