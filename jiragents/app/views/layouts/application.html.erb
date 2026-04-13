@@ -23,8 +23,20 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <main class="container mx-auto mt-28 px-5 flex">
+  <body class="bg-gray-50 min-h-screen">
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+      <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+        <%= link_to "JirAgents", root_path, class: "text-xl font-bold text-indigo-600" %>
+        <div class="flex gap-6">
+          <%= link_to "Dashboard", root_path, class: "text-gray-600 hover:text-gray-900 text-sm" %>
+          <%= link_to "Agents", agents_path, class: "text-gray-600 hover:text-gray-900 text-sm" %>
+          <%= link_to "Tasks", tasks_path, class: "text-gray-600 hover:text-gray-900 text-sm" %>
+          <%= link_to "New Task", new_task_path, class: "bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition text-sm" %>
+        </div>
+      </div>
+    </nav>
+
+    <main>
       <%= yield %>
     </main>
   </body>
