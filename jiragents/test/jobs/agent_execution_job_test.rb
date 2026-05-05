@@ -26,7 +26,7 @@ class AgentExecutionJobTest < ActiveJob::TestCase
     AgentExecutionJob.any_instance.stubs(:run_claude).returns("Task completed successfully")
     AgentExecutionJob.perform_now(@task.id)
     @task.reload
-    assert_includes ["completed", "running"], @task.status
+    assert_includes [ "completed", "running" ], @task.status
   end
 
   test "sets task to completed on success" do

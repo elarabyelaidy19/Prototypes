@@ -1,0 +1,22 @@
+# Terraform state — contains secrets and machine-generated, never commit
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+crash.log
+crash.*.log
+
+# Terraform working dir (re-fetched on `init`)
+.terraform/
+
+# Plan artifacts
+*.tfplan
+
+# Variable files often hold secrets
+*.tfvars
+*.tfvars.json
+!example.tfvars
+
+# LocalStack persistence
+localstack-data/
+
+# Note: .terraform.lock.hcl IS committed (pins provider versions for reproducibility)

@@ -25,6 +25,6 @@ class AgentsController < ApplicationController
   private
 
   def agent_params
-    params.expect(agent: [:name, :description])
+    params.expect(agent: [ :name, :description ])
   end
 end

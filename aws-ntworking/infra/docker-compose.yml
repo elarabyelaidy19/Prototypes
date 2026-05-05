@@ -1,0 +1,26 @@
+services:
+  localstack:
+    container_name: localstack
+    # IMPORTANT: pin a tag, never use :latest.
+    # `:stable` tracks the latest released *community* (free) version.
+    # If :stable ever drifts into a Pro-gated build, fall back to a numeric
+    # pin like :3.8 or :4.0.
+    image: localstack/localstack:3.8
+    ports:
+      - "4566:4566"            # edge port — every AWS service multiplexes here
+      - "4510-4559:4510-4559"  # external service ports (rare; harmless to expose)
+    environment:
+      DEBUG: "0"
+      LS_LOG: "warn"
+      # In current LocalStack, services start lazily on first API call.
+      # No need to whitelist — keeps the config minimal.
+    volumes:
+      - "./localstack-data:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    healthcheck:
+      # CMD-SHELL so we can chain `|| exit 1` for clearer failure semantics.
+      test: ["CMD-SHELL", "curl -fsS http://localhost:4566/_localstack/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 60s   # cold start can legitimately take ~60s

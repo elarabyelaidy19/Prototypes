@@ -48,6 +48,6 @@ class TasksController < ApplicationController
   private
 
   def task_params
-    params.expect(task: [:title, :description, :agent_id, :working_directory])
+    params.expect(task: [ :title, :description, :agent_id, :working_directory ])
   end
 end
