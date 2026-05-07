@@ -11,6 +11,7 @@ A running record of what's been built, what was proven, and the mental models th
 3. [Mental models locked in](#mental-models-locked-in)
 4. [Gotchas / surprises encountered](#gotchas--surprises-encountered)
 5. [Lab 2 — Public Subnet (IGW + Route Tables)](#lab-2--public-subnet-igw--route-tables)
+6. [Lab 3 — Private Subnet + NAT Gateway](#lab-3--private-subnet--nat-gateway)
 
 ---
 
@@ -558,6 +559,151 @@ The same subnet becomes public or private based solely on its **route table**. T
 
 ---
 
+## Lab 3 — Private Subnet + NAT Gateway
+
+### The central claim
+
+> A NAT Gateway gives private-subnet instances outbound internet access (yum install, curl, DNS) while blocking all inbound from the internet. It's a one-way valve that lives in the public subnet.
+
+### Architecture deployed
+
+```
+                              AWS account 382884104985
+   ┌──────────────────────────────────────────────────────────────────────┐
+   │                                                                      │
+   │   VPC: lab03-vpc   (10.0.0.0/16)                                      │
+   │                                                                      │
+   │   ┌──── Internet Gateway (lab03-igw) ────┐                            │
+   │   │                                      │                            │
+   │   └──────────────┬───────────────────────┘                            │
+   │                  │                                                    │
+   │   ┌──────────────┼──────────────────────────────────────────────┐    │
+   │   │              ▼                                              │    │
+   │   │   Public Subnet (10.0.1.0/24, us-east-1a)                    │    │
+   │   │   RT: 0.0.0.0/0 → IGW                                       │    │
+   │   │                                                             │    │
+   │   │   ┌──────────────────┐    ┌───────────────────────────┐     │    │
+   │   │   │  EC2-public      │    │  NAT Gateway              │     │    │
+   │   │   │  10.0.1.153      │    │  EIP: 44.194.162.244      │     │    │
+   │   │   │  pub: 98.80.x    │    │                           │     │    │
+   │   │   └──────────────────┘    │  Receives traffic from    │     │    │
+   │   │                           │  private subnet, rewrites │     │    │
+   │   │                           │  src IP to its EIP, then  │     │    │
+   │   │                           │  forwards through IGW     │     │    │
+   │   │                           └─────────▲─────────────────┘     │    │
+   │   │                                     │                       │    │
+   │   ├─────────────────────────────────────┼───────────────────────┤    │
+   │   │                                     │                       │    │
+   │   │   Private Subnet (10.0.2.0/24, us-east-1b)                  │    │
+   │   │   RT: 0.0.0.0/0 → nat-xxx    ◄──── POINTS UP TO NAT GW     │    │
+   │   │       10.0.0.0/16 → local                                   │    │
+   │   │                                                             │    │
+   │   │   ┌──────────────────┐                                      │    │
+   │   │   │  EC2-private     │                                      │    │
+   │   │   │  10.0.2.236      │                                      │    │
+   │   │   │  NO public IP    │                                      │    │
+   │   │   └──────────────────┘                                      │    │
+   │   │                                                             │    │
+   │   └─────────────────────────────────────────────────────────────┘    │
+   └──────────────────────────────────────────────────────────────────────┘
+```
+
+### The double-NAT chain
+
+```
+  EC2-B (private)         NAT Gateway              IGW               Internet
+  ─────────────          ───────────              ───               ────────
+  
+  OUTBOUND:
+  src: 10.0.2.236        "Rewrite src to         "EIP is already    ifconfig.me
+  dst: 93.184.x.x  ──>   my EIP                  public — no  ──> sees src
+                          44.194.162.244.    ──>   translation       44.194.162.244
+                          Remember this            needed."
+                          connection."
+
+  INBOUND (return):
+  dst: 44.194.162.244    "That's my EIP.         "44.194.162.244
+                    ◄──   I have a mapping  ◄──   is in this   ◄── response
+                          for this flow.          VPC. Route
+                          Rewrite dst to          to NAT GW."
+                          10.0.2.236."
+```
+
+### Behavioral tests — Lab 2 vs Lab 3 comparison
+
+| Test from EC2-B | Lab 2 (no NAT) | Lab 3 (with NAT) |
+|---|---|---|
+| `curl ifconfig.me` | timeout | `44.194.162.244` (NAT EIP) |
+| `yum install tree` | hung forever | installed successfully |
+| `ping 8.8.8.8` | 100% loss | 3/3 received |
+| `ping 10.0.1.x` (EC2-A) | 3/3 received | 3/3 received |
+
+### Break/fix results
+
+| Test | Route deleted | Route restored |
+|---|---|---|
+| `curl ifconfig.me` | timeout | `44.194.162.244` |
+| `ping 10.0.1.153` | ✅ works (local route) | ✅ works |
+
+Same pattern as Labs 1 and 2: removing `0.0.0.0/0` kills internet but `local` route is untouchable.
+
+### Resources created (21 total)
+
+New pieces beyond Lab 2:
+
+| Resource | Purpose |
+|---|---|
+| `aws_eip` | Public IP for NAT Gateway |
+| `aws_nat_gateway` | One-way valve in public subnet |
+| `aws_route_table` (private) | `0.0.0.0/0 → nat-xxx` for private subnet |
+| `aws_route_table_association` (private) | Associates private subnet with its RT |
+
+### New mental models from Lab 3
+
+### 10. NAT Gateway = one-way valve
+
+```
+  Internet ──X──> NAT GW    (inbound initiated connections: BLOCKED)
+  
+  EC2-B ──────> NAT GW ──> IGW ──> Internet    (outbound: ALLOWED)
+  Internet ──> IGW ──> NAT GW ──> EC2-B        (return traffic: ALLOWED)
+                                                 (because NAT GW is stateful,
+                                                  remembers the outbound flow)
+```
+
+Unlike the IGW (stateless translator), the NAT Gateway IS stateful — it tracks connections to map return traffic. But it only tracks connections initiated from inside.
+
+### 11. NAT GW must live in a public subnet
+
+The NAT GW needs to reach the internet itself (via IGW). If it were in the private subnet, it would have the same problem as the instances it's trying to help — no route out.
+
+```
+  ┌─ NAT GW in public subnet ──> has IGW route ──> can forward to internet ✅
+  └─ NAT GW in private subnet ──> no IGW route ──> stuck ❌
+```
+
+### 12. Two route tables, two personalities, one VPC
+
+```
+  Public RT:    10.0.0.0/16 → local    +    0.0.0.0/0 → IGW        (direct internet)
+  Private RT:   10.0.0.0/16 → local    +    0.0.0.0/0 → NAT GW    (NAT'd internet)
+```
+
+Both share `local` (intra-VPC always works). They differ only in where `0.0.0.0/0` points. That single row is the entire personality difference between "public" and "private."
+
+### 13. Cost awareness: NAT GW is the first resource that costs real money
+
+| Resource | Cost |
+|---|---|
+| NAT Gateway | $0.045/hr = $32/mo |
+| Data processing | $0.045/GB through NAT |
+| EIP (while attached) | free |
+| EIP (unattached) | $0.005/hr |
+
+Cheaper alternative: NAT instance (t3.nano ~$3.50/mo) with source/dest check disabled. Tradeoff: you manage HA, patching, scaling yourself.
+
+---
+
 ## Cumulative cost
 
 | Lab | $ spent | Time alive |
@@ -565,8 +711,9 @@ The same subnet becomes public or private based solely on its **route table**. T
 | Lab 0 | $0 | n/a |
 | Lab 1 | $0 (free tier) | ~30 min |
 | Lab 2 | $0 (free tier) | ~45 min |
-| **Total** | **$0** | — |
+| Lab 3 | ~$0.01 (NAT GW) | ~15 min |
+| **Total** | **~$0.01** | — |
 
 ---
 
-*Last updated: 2026-05-06 — after Lab 2 destroy.*
+*Last updated: 2026-05-08 — after Lab 3 destroy.*
