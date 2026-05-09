@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0D1117; font-family: 'Inter', system-ui, sans-serif; }
+
+      .clip { position: absolute; }
+
+      .vpc-boundary {
+        border: 2px solid #FF9900;
+        border-radius: 8px;
+        background: #1A2332;
+      }
+      .subnet {
+        border: 1.5px solid rgba(59,72,204,0.5);
+        border-radius: 6px;
+        padding: 12px;
+      }
+      .subnet-public { background: #243447; }
+      .subnet-private { background: #1A2B1A; }
+      .layer-label {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: #F5F5F5;
+        opacity: 0.5;
+      }
+      .layer-divider {
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #3B48CC, transparent);
+      }
+      .aws-box {
+        border-radius: 6px;
+        padding: 10px 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+      .aws-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #F5F5F5;
+        text-align: center;
+        line-height: 1.3;
+      }
+      .aws-sublabel {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10px;
+        color: rgba(245,245,245,0.6);
+        text-align: center;
+      }
+      .aws-icon {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        border-radius: 4px;
+      }
+      .internet-cloud {
+        background: linear-gradient(135deg, #232F3E, #2D3A4A);
+        border: 1.5px solid #3B48CC;
+        border-radius: 8px;
+        padding: 16px 28px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .dns-box {
+        background: linear-gradient(135deg, #1a2744, #243552);
+        border: 1.5px solid #3B48CC;
+        border-radius: 6px;
+        padding: 12px 20px;
+      }
+      .alb-node {
+        background: linear-gradient(135deg, #3D2600, #4A2F00);
+        border: 1.5px solid #FF9900;
+        box-shadow: 0 0 12px rgba(255,153,0,0.15);
+      }
+      .ec2-target {
+        background: linear-gradient(135deg, #142210, #1B2B16);
+        border: 1.5px solid #1B660F;
+      }
+      .ec2-target.healthy {
+        box-shadow: 0 0 10px rgba(27,102,15,0.3);
+      }
+      .sg-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 9px;
+        font-family: 'JetBrains Mono', monospace;
+        color: #F5F5F5;
+        background: rgba(217,48,37,0.2);
+        border: 1px solid rgba(217,48,37,0.4);
+      }
+      .flow-line {
+        position: absolute;
+        background: #3B48CC;
+        opacity: 0.3;
+      }
+      .flow-line-v { width: 2px; }
+      .data-packet {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #FF9900;
+        box-shadow: 0 0 16px rgba(255,153,0,0.6), 0 0 4px rgba(255,153,0,0.9);
+        position: absolute;
+      }
+      .data-packet-response {
+        background: #1B660F;
+        box-shadow: 0 0 16px rgba(27,102,15,0.6), 0 0 4px rgba(27,102,15,0.9);
+      }
+      .health-pulse {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #1B660F;
+        position: absolute;
+      }
+      .scene-title {
+        font-size: 28px;
+        font-weight: 800;
+        color: #FF9900;
+        letter-spacing: -0.5px;
+      }
+      .scene-subtitle {
+        font-size: 15px;
+        font-weight: 500;
+        color: rgba(245,245,245,0.7);
+      }
+      .rt-table {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10px;
+        color: #F5F5F5;
+        border-collapse: collapse;
+      }
+      .rt-table td {
+        padding: 2px 8px;
+        border: 1px solid rgba(59,72,204,0.3);
+      }
+      .rt-table .rt-header {
+        background: rgba(59,72,204,0.15);
+        font-weight: 600;
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .sg-chain-box {
+        background: rgba(217,48,37,0.08);
+        border: 1.5px solid rgba(217,48,37,0.3);
+        border-radius: 6px;
+        padding: 14px 18px;
+      }
+      .sg-rule {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: rgba(245,245,245,0.8);
+        line-height: 1.6;
+      }
+      .sg-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #D93025;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="45" data-width="1920" data-height="1080">
+
+      <!-- Title bar — full duration, track 0 -->
+      <div id="title-bar" class="clip" data-start="0" data-duration="45" data-track-index="0"
+           style="left:0; top:0; width:1920px; height:56px; background:linear-gradient(90deg,#232F3E,#1A2332); border-bottom:1px solid rgba(255,153,0,0.3); display:flex; align-items:center; padding:0 32px; z-index:100;">
+        <span style="font-size:18px; font-weight:700; color:#FF9900;">AWS</span>
+        <span style="font-size:18px; font-weight:500; color:#F5F5F5; margin-left:10px;">Lab 05 — Application Load Balancer Architecture</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:rgba(245,245,245,0.4); margin-left:auto;">us-east-1 | Account: 382884104985</span>
+      </div>
+
+      <!-- Internet cloud — track 1 -->
+      <div id="internet" class="clip" data-start="0" data-duration="45" data-track-index="1"
+           style="left:810px; top:72px; z-index:10;">
+        <div class="internet-cloud">
+          <div class="aws-icon" style="background:rgba(59,72,204,0.2); font-size:24px;">&#127760;</div>
+          <div>
+            <div class="aws-label">The Internet</div>
+            <div class="aws-sublabel">HTTP GET /</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DNS Resolution — track 2 -->
+      <div id="dns" class="clip" data-start="1" data-duration="44" data-track-index="2"
+           style="left:1080px; top:74px; z-index:10;">
+        <div class="dns-box">
+          <div class="aws-label" style="font-size:11px;">DNS Resolution</div>
+          <div class="aws-sublabel" style="font-size:9px;">lab05-alb-xxx.us-east-1.elb.amazonaws.com</div>
+          <div class="aws-sublabel" style="font-size:9px; color:#FF9900;">&#8594; 52.x.x.x &nbsp; 52.y.y.y (fleet)</div>
+        </div>
+      </div>
+
+      <!-- Flow line: Internet → VPC — track 3 -->
+      <div id="flow-inet-vpc" class="clip flow-line flow-line-v" data-start="1.5" data-duration="43.5" data-track-index="3"
+           style="left:880px; top:128px; height:60px; z-index:5;"></div>
+
+      <!-- VPC Boundary — track 4 -->
+      <div id="vpc" class="clip vpc-boundary" data-start="2" data-duration="43" data-track-index="4"
+           style="left:60px; top:188px; width:1800px; height:860px; z-index:1;">
+        <div style="position:absolute; top:-14px; left:20px; background:#0D1117; padding:0 10px;">
+          <span style="font-size:14px; font-weight:700; color:#FF9900;">VPC</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:rgba(245,245,245,0.5);"> lab05-vpc (10.0.0.0/16)</span>
+        </div>
+      </div>
+
+      <!-- Internet Gateway — track 5 -->
+      <div id="igw" class="clip aws-box" data-start="3" data-duration="42" data-track-index="5"
+           style="left:820px; top:196px; background:linear-gradient(135deg,#3D2600,#4A2F00); border:1.5px solid #FF9900; z-index:6;">
+        <div class="aws-icon" style="background:rgba(255,153,0,0.15);">&#9741;</div>
+        <div class="aws-label">Internet Gateway</div>
+        <div class="aws-sublabel">igw-xxx</div>
+      </div>
+
+      <!-- PUBLIC LAYER label — track 6 -->
+      <div id="public-label" class="clip layer-label" data-start="3.5" data-duration="41.5" data-track-index="6"
+           style="left:100px; top:290px; z-index:3;">
+        &#9473;&#9473; PUBLIC LAYER &#9473;&#9473;
+      </div>
+
+      <!-- Public Subnet 1 — track 7 -->
+      <div id="pub-sub1" class="clip subnet subnet-public" data-start="4" data-duration="41" data-track-index="7"
+           style="left:100px; top:310px; width:840px; height:230px; z-index:2;">
+        <div class="aws-label" style="font-size:13px; margin-bottom:4px;">Public Subnet 1</div>
+        <div class="aws-sublabel">10.0.1.0/24 &nbsp;|&nbsp; us-east-1a</div>
+        <div class="aws-sublabel" style="color:#3B48CC;">RT: 0.0.0.0/0 &#8594; IGW</div>
+      </div>
+
+      <!-- Public Subnet 2 — track 8 -->
+      <div id="pub-sub2" class="clip subnet subnet-public" data-start="4" data-duration="41" data-track-index="8"
+           style="left:980px; top:310px; width:840px; height:230px; z-index:2;">
+        <div class="aws-label" style="font-size:13px; margin-bottom:4px;">Public Subnet 2</div>
+        <div class="aws-sublabel">10.0.2.0/24 &nbsp;|&nbsp; us-east-1b</div>
+        <div class="aws-sublabel" style="color:#3B48CC;">RT: 0.0.0.0/0 &#8594; IGW</div>
+      </div>
+
+      <!-- ALB Node 1 — track 9 -->
+      <div id="alb1" class="clip aws-box alb-node" data-start="5" data-duration="40" data-track-index="9"
+           style="left:280px; top:365px; z-index:4;">
+        <div class="aws-icon" style="background:rgba(255,153,0,0.15);">&#9879;</div>
+        <div class="aws-label">ALB Node 1</div>
+        <div class="aws-sublabel">(auto-managed)</div>
+        <div class="sg-badge">&#128274; lab05-alb-sg</div>
+      </div>
+
+      <!-- ALB Node 2 — track 10 -->
+      <div id="alb2" class="clip aws-box alb-node" data-start="5" data-duration="40" data-track-index="10"
+           style="left:1160px; top:365px; z-index:4;">
+        <div class="aws-icon" style="background:rgba(255,153,0,0.15);">&#9879;</div>
+        <div class="aws-label">ALB Node 2</div>
+        <div class="aws-sublabel">(auto-managed)</div>
+        <div class="sg-badge">&#128274; lab05-alb-sg</div>
+      </div>
+
+      <!-- ALB Span indicator — track 11 -->
+      <div id="alb-span" class="clip" data-start="5.5" data-duration="39.5" data-track-index="11"
+           style="left:380px; top:435px; width:880px; z-index:4;">
+        <div style="height:2px; background:linear-gradient(90deg,#FF9900,rgba(255,153,0,0.2),#FF9900); border-radius:1px;"></div>
+        <div style="text-align:center; font-size:10px; color:rgba(255,153,0,0.6); margin-top:2px; font-weight:500;">ALB spans both AZs</div>
+      </div>
+
+      <!-- NAT Gateway — track 12 -->
+      <div id="nat-gw" class="clip aws-box" data-start="6" data-duration="39" data-track-index="12"
+           style="left:560px; top:458px; background:linear-gradient(135deg,#3D2600,#4A2F00); border:1.5px solid #FF9900; z-index:4;">
+        <div class="aws-icon" style="background:rgba(255,153,0,0.15);">&#128256;</div>
+        <div class="aws-label">NAT Gateway</div>
+        <div class="aws-sublabel">EIP: 44.x.x.x</div>
+      </div>
+
+      <!-- Bastion Host — track 13 -->
+      <div id="bastion" class="clip aws-box" data-start="6" data-duration="39" data-track-index="13"
+           style="left:1400px; top:458px; background:linear-gradient(135deg,#2A1A10,#3A2518); border:1.5px solid #D93025; z-index:4;">
+        <div class="aws-icon" style="background:rgba(217,48,37,0.15);">&#128737;</div>
+        <div class="aws-label">Bastion / Jump Host</div>
+        <div class="aws-sublabel">SSH access</div>
+        <div class="sg-badge">&#128274; lab05-bastion-sg</div>
+      </div>
+
+      <!-- Layer divider — track 14 -->
+      <div id="layer-divider" class="clip layer-divider" data-start="7" data-duration="38" data-track-index="14"
+           style="left:100px; top:560px; width:1720px; z-index:3;"></div>
+
+      <!-- PRIVATE LAYER label — track 15 -->
+      <div id="private-label" class="clip layer-label" data-start="7" data-duration="38" data-track-index="15"
+           style="left:100px; top:572px; z-index:3;">
+        &#9473;&#9473; PRIVATE LAYER &#9473;&#9473;
+      </div>
+
+      <!-- Private Subnet 1 — track 16 -->
+      <div id="priv-sub1" class="clip subnet subnet-private" data-start="7.5" data-duration="37.5" data-track-index="16"
+           style="left:100px; top:596px; width:840px; height:240px; z-index:2;">
+        <div class="aws-label" style="font-size:13px; margin-bottom:4px;">Private Subnet 1</div>
+        <div class="aws-sublabel">10.0.10.0/24 &nbsp;|&nbsp; us-east-1a</div>
+        <div class="aws-sublabel" style="color:#3B48CC;">RT: 0.0.0.0/0 &#8594; NAT GW</div>
+      </div>
+
+      <!-- Private Subnet 2 — track 17 -->
+      <div id="priv-sub2" class="clip subnet subnet-private" data-start="7.5" data-duration="37.5" data-track-index="17"
+           style="left:980px; top:596px; width:840px; height:240px; z-index:2;">
+        <div class="aws-label" style="font-size:13px; margin-bottom:4px;">Private Subnet 2</div>
+        <div class="aws-sublabel">10.0.11.0/24 &nbsp;|&nbsp; us-east-1b</div>
+        <div class="aws-sublabel" style="color:#3B48CC;">RT: 0.0.0.0/0 &#8594; NAT GW</div>
+      </div>
+
+      <!-- EC2 Target 1 — track 18 -->
+      <div id="ec2-1" class="clip aws-box ec2-target healthy" data-start="8" data-duration="37" data-track-index="18"
+           style="left:230px; top:650px; width:200px; z-index:4;">
+        <div class="aws-icon" style="background:rgba(27,102,15,0.15);">&#128421;</div>
+        <div class="aws-label">EC2 Target 1</div>
+        <div class="aws-sublabel">t3.micro &nbsp;|&nbsp; nginx :80</div>
+        <div class="aws-sublabel">10.0.10.x &nbsp;|&nbsp; NO public IP</div>
+        <div class="sg-badge" style="background:rgba(27,102,15,0.2); border-color:rgba(27,102,15,0.4);">&#128274; lab05-target-sg</div>
+        <div style="margin-top:6px; padding:6px 10px; background:rgba(0,0,0,0.3); border-radius:4px; font-family:'JetBrains Mono',monospace; font-size:9px; color:rgba(245,245,245,0.7);">
+          &lt;h1&gt;Lab 05&lt;/h1&gt;<br/>i-aaa &nbsp; us-east-1a
+        </div>
+      </div>
+
+      <!-- EC2 Target 2 — track 19 -->
+      <div id="ec2-2" class="clip aws-box ec2-target healthy" data-start="8" data-duration="37" data-track-index="19"
+           style="left:1110px; top:650px; width:200px; z-index:4;">
+        <div class="aws-icon" style="background:rgba(27,102,15,0.15);">&#128421;</div>
+        <div class="aws-label">EC2 Target 2</div>
+        <div class="aws-sublabel">t3.micro &nbsp;|&nbsp; nginx :80</div>
+        <div class="aws-sublabel">10.0.11.x &nbsp;|&nbsp; NO public IP</div>
+        <div class="sg-badge" style="background:rgba(27,102,15,0.2); border-color:rgba(27,102,15,0.4);">&#128274; lab05-target-sg</div>
+        <div style="margin-top:6px; padding:6px 10px; background:rgba(0,0,0,0.3); border-radius:4px; font-family:'JetBrains Mono',monospace; font-size:9px; color:rgba(245,245,245,0.7);">
+          &lt;h1&gt;Lab 05&lt;/h1&gt;<br/>i-bbb &nbsp; us-east-1b
+        </div>
+      </div>
+
+      <!-- Flow lines — each on own track 20-23 -->
+      <div id="flow-igw-alb1" class="clip flow-line flow-line-v" data-start="5" data-duration="40" data-track-index="20"
+           style="left:340px; top:272px; height:93px; z-index:3;"></div>
+      <div id="flow-igw-alb2" class="clip flow-line flow-line-v" data-start="5" data-duration="40" data-track-index="21"
+           style="left:1220px; top:272px; height:93px; z-index:3;"></div>
+      <div id="flow-alb1-ec2" class="clip flow-line flow-line-v" data-start="8.5" data-duration="36.5" data-track-index="22"
+           style="left:340px; top:445px; height:210px; z-index:3;"></div>
+      <div id="flow-alb2-ec2" class="clip flow-line flow-line-v" data-start="8.5" data-duration="36.5" data-track-index="23"
+           style="left:1220px; top:445px; height:210px; z-index:3;"></div>
+
+      <!-- Data packet request — track 24 -->
+      <div id="packet-req" class="clip data-packet" data-start="11" data-duration="7" data-track-index="24"
+           style="left:874px; top:128px; z-index:20;"></div>
+
+      <!-- Data packet response — track 25 -->
+      <div id="packet-resp" class="clip data-packet data-packet-response" data-start="16" data-duration="4" data-track-index="25"
+           style="left:328px; top:650px; z-index:20;"></div>
+
+      <!-- Request lifecycle label — track 26 -->
+      <div id="lifecycle-label" class="clip" data-start="10" data-duration="10" data-track-index="26"
+           style="left:60px; top:870px; width:500px; z-index:10;">
+        <div class="scene-title" style="font-size:20px;">HTTP Request Lifecycle</div>
+      </div>
+
+      <!-- Request lifecycle steps — track 27 -->
+      <div id="lifecycle-step" class="clip" data-start="11" data-duration="9" data-track-index="27"
+           style="left:60px; top:900px; width:600px; z-index:10;">
+        <div id="step-text" style="font-family:'JetBrains Mono',monospace; font-size:13px; color:rgba(245,245,245,0.8); line-height:1.8;">
+          <div class="step" style="opacity:0;">1. Browser resolves DNS &#8594; 52.x.x.x</div>
+          <div class="step" style="opacity:0;">2. GET / hits ALB SG &#10003; tcp/80 allowed</div>
+          <div class="step" style="opacity:0;">3. ALB listener picks healthy target</div>
+          <div class="step" style="opacity:0;">4. Forward to 10.0.10.x:80 (private IP)</div>
+          <div class="step" style="opacity:0;">5. Target SG &#10003; from ALB SG only</div>
+          <div class="step" style="opacity:0;">6. nginx responds &#8594; back to browser</div>
+        </div>
+      </div>
+
+      <!-- Security Group Chain — track 28 -->
+      <div id="sg-chain" class="clip" data-start="21" data-duration="9" data-track-index="28"
+           style="left:60px; top:860px; width:1800px; z-index:10;">
+        <div style="display:flex; gap:24px; align-items:stretch;">
+          <div class="sg-chain-box" style="flex:1;">
+            <div class="sg-title">&#128737; ALB Security Group (lab05-alb-sg)</div>
+            <div class="sg-rule">
+              Ingress: tcp/80 from 0.0.0.0/0 (public)<br/>
+              Ingress: tcp/22 from operator IP<br/>
+              Egress: all traffic
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; color:#D93025; font-size:28px; font-weight:700;">&#8594;</div>
+          <div class="sg-chain-box" style="flex:1;">
+            <div class="sg-title">&#128274; Target Security Group (lab05-target-sg)</div>
+            <div class="sg-rule">
+              Ingress: tcp/80 from <span style="color:#FF9900;">lab05-alb-sg</span> (SG reference!)<br/>
+              Egress: all traffic
+            </div>
+            <div style="margin-top:8px; font-size:11px; color:rgba(245,245,245,0.5); font-style:italic;">
+              "Only the ALB can talk to me on port 80"
+            </div>
+          </div>
+          <div style="flex:0.8; display:flex; flex-direction:column; gap:10px;">
+            <div class="sg-chain-box" style="border-color:rgba(59,72,204,0.3); background:rgba(59,72,204,0.05);">
+              <div class="sg-title" style="color:#3B48CC; font-size:12px;">&#128203; Public Route Table</div>
+              <table class="rt-table">
+                <tr class="rt-header"><td>Destination</td><td>Target</td></tr>
+                <tr><td>10.0.0.0/16</td><td>local</td></tr>
+                <tr><td>0.0.0.0/0</td><td>igw-xxx</td></tr>
+              </table>
+            </div>
+            <div class="sg-chain-box" style="border-color:rgba(59,72,204,0.3); background:rgba(59,72,204,0.05);">
+              <div class="sg-title" style="color:#3B48CC; font-size:12px;">&#128203; Private Route Table</div>
+              <table class="rt-table">
+                <tr class="rt-header"><td>Destination</td><td>Target</td></tr>
+                <tr><td>10.0.0.0/16</td><td>local</td></tr>
+                <tr><td>0.0.0.0/0</td><td>nat-xxx</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Health check label — track 29 -->
+      <div id="hc-label" class="clip" data-start="31" data-duration="9" data-track-index="29"
+           style="left:60px; top:870px; width:500px; z-index:10;">
+        <div class="scene-title" style="font-size:20px;">Health Check Lifecycle</div>
+        <div class="scene-subtitle" style="font-size:12px; margin-top:4px;">Every 10s, ALB sends GET / to each target</div>
+      </div>
+
+      <!-- Health check detail — track 30 -->
+      <div id="hc-detail" class="clip" data-start="31.5" data-duration="8.5" data-track-index="30"
+           style="left:60px; top:920px; width:600px; z-index:10;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:12px; color:rgba(245,245,245,0.7); line-height:2;">
+          <div id="hc-step1" style="opacity:0;">ALB &#8594; GET / &#8594; target:80</div>
+          <div id="hc-step2" style="opacity:0;">HTTP 200 &#10003; &#8594; healthy (stays in rotation)</div>
+          <div id="hc-step3" style="opacity:0;">Timeout/Error &#10007; &#8594; strike 1 of 2</div>
+          <div id="hc-step4" style="opacity:0;">2 consecutive failures &#8594; UNHEALTHY &#8594; removed</div>
+        </div>
+      </div>
+
+      <!-- Health pulse 1 — track 31 -->
+      <div id="hc-pulse1" class="clip health-pulse" data-start="32" data-duration="8" data-track-index="31"
+           style="left:326px; top:648px; z-index:15;"></div>
+
+      <!-- Health pulse 2 — track 32 -->
+      <div id="hc-pulse2" class="clip health-pulse" data-start="32" data-duration="8" data-track-index="32"
+           style="left:1206px; top:648px; z-index:15;"></div>
+
+      <!-- Final summary — track 33 -->
+      <div id="summary" class="clip" data-start="40" data-duration="5" data-track-index="33"
+           style="left:60px; top:870px; width:1800px; z-index:10;">
+        <div style="display:flex; justify-content:center; gap:40px; align-items:center;">
+          <div style="text-align:center;">
+            <div style="font-size:32px;">&#127760;</div>
+            <div class="aws-sublabel">Internet</div>
+          </div>
+          <div style="color:#3B48CC; font-size:20px;">&#8594;</div>
+          <div style="text-align:center;">
+            <div style="font-size:32px;">&#9741;</div>
+            <div class="aws-sublabel">IGW</div>
+          </div>
+          <div style="color:#3B48CC; font-size:20px;">&#8594;</div>
+          <div style="text-align:center;">
+            <div style="font-size:32px;">&#9879;</div>
+            <div class="aws-sublabel">ALB</div>
+          </div>
+          <div style="color:#3B48CC; font-size:20px;">&#8594;</div>
+          <div style="text-align:center;">
+            <div style="font-size:32px;">&#128274;</div>
+            <div class="aws-sublabel">SG Check</div>
+          </div>
+          <div style="color:#3B48CC; font-size:20px;">&#8594;</div>
+          <div style="text-align:center;">
+            <div style="font-size:32px;">&#128421;</div>
+            <div class="aws-sublabel">EC2 Target</div>
+          </div>
+          <div style="color:#1B660F; font-size:20px;">&#8594;</div>
+          <div style="text-align:center;">
+            <div style="font-size:32px; color:#1B660F;">&#10004;</div>
+            <div class="aws-sublabel" style="color:#1B660F;">Response</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      var tl = gsap.timeline({ paused: true });
+
+      // Scene 1: Title + Internet (0-2s)
+      tl.from("#title-bar", { y: -56, duration: 0.6, ease: "power2.out" }, 0);
+      tl.from("#internet", { autoAlpha: 0, y: -30, duration: 0.8, ease: "power2.out" }, 0.3);
+      tl.from("#dns", { autoAlpha: 0, x: 40, duration: 0.6, ease: "power2.out" }, 1);
+      tl.from("#flow-inet-vpc", { scaleY: 0, transformOrigin: "top center", duration: 0.5, ease: "power2.out" }, 1.5);
+
+      // Scene 2: VPC boundary (2-3s)
+      tl.from("#vpc", { autoAlpha: 0, scale: 0.95, duration: 0.8, ease: "power2.out" }, 2);
+      tl.from("#igw", { autoAlpha: 0, y: -20, duration: 0.6, ease: "power2.out" }, 3);
+
+      // Scene 3: Public subnets (3.5-5s)
+      tl.from("#public-label", { autoAlpha: 0, x: -30, duration: 0.5, ease: "power2.out" }, 3.5);
+      tl.from("#pub-sub1", { autoAlpha: 0, x: -40, duration: 0.7, ease: "power2.out" }, 4);
+      tl.from("#pub-sub2", { autoAlpha: 0, x: 40, duration: 0.7, ease: "power2.out" }, 4);
+
+      // Scene 4: ALB nodes (5-6s)
+      tl.from("#flow-igw-alb1", { scaleY: 0, transformOrigin: "top center", duration: 0.4, ease: "power2.out" }, 5);
+      tl.from("#flow-igw-alb2", { scaleY: 0, transformOrigin: "top center", duration: 0.4, ease: "power2.out" }, 5);
+      tl.from("#alb1", { autoAlpha: 0, scale: 0.8, duration: 0.6, ease: "back.out(1.5)" }, 5.2);
+      tl.from("#alb2", { autoAlpha: 0, scale: 0.8, duration: 0.6, ease: "back.out(1.5)" }, 5.4);
+      tl.from("#alb-span", { autoAlpha: 0, scaleX: 0, duration: 0.6, ease: "power2.out" }, 5.6);
+
+      // Scene 5: NAT + Bastion (6s)
+      tl.from("#nat-gw", { autoAlpha: 0, y: 20, duration: 0.5, ease: "power2.out" }, 6);
+      tl.from("#bastion", { autoAlpha: 0, y: 20, duration: 0.5, ease: "power2.out" }, 6.2);
+
+      // Scene 6: Private layer (7-9s)
+      tl.from("#layer-divider", { scaleX: 0, duration: 0.6, ease: "power2.inOut" }, 7);
+      tl.from("#private-label", { autoAlpha: 0, x: -30, duration: 0.5, ease: "power2.out" }, 7.2);
+      tl.from("#priv-sub1", { autoAlpha: 0, y: 30, duration: 0.7, ease: "power2.out" }, 7.5);
+      tl.from("#priv-sub2", { autoAlpha: 0, y: 30, duration: 0.7, ease: "power2.out" }, 7.5);
+      tl.from("#ec2-1", { autoAlpha: 0, scale: 0.8, duration: 0.6, ease: "back.out(1.5)" }, 8);
+      tl.from("#ec2-2", { autoAlpha: 0, scale: 0.8, duration: 0.6, ease: "back.out(1.5)" }, 8.2);
+      tl.from("#flow-alb1-ec2", { scaleY: 0, transformOrigin: "top center", duration: 0.5, ease: "power2.out" }, 8.5);
+      tl.from("#flow-alb2-ec2", { scaleY: 0, transformOrigin: "top center", duration: 0.5, ease: "power2.out" }, 8.5);
+
+      // Scene 7: HTTP Request lifecycle (10-20s)
+      tl.from("#lifecycle-label", { autoAlpha: 0, y: 20, duration: 0.5, ease: "power2.out" }, 10);
+      var steps = document.querySelectorAll(".step");
+      steps.forEach(function(step, i) {
+        tl.to(step, { opacity: 1, duration: 0.3, ease: "power2.out" }, 11 + i * 0.8);
+      });
+
+      // Request packet flows down
+      tl.to("#packet-req", { y: 60, duration: 0.6, ease: "power1.inOut" }, 11);
+      tl.to("#packet-req", { y: 240, x: -534, duration: 0.8, ease: "power1.inOut" }, 11.8);
+      tl.to("#packet-req", { y: 525, duration: 0.8, ease: "power1.inOut" }, 12.8);
+      tl.to("#packet-req", { autoAlpha: 0, duration: 0.3 }, 13.8);
+
+      // Flash EC2-1 on hit
+      tl.to("#ec2-1", { boxShadow: "0 0 24px rgba(255,153,0,0.6)", duration: 0.3, ease: "power2.out" }, 13.8);
+      tl.to("#ec2-1", { boxShadow: "0 0 10px rgba(27,102,15,0.3)", duration: 0.5, ease: "power2.out" }, 14.3);
+
+      // Response packet flows up
+      tl.fromTo("#packet-resp", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.2 }, 16);
+      tl.to("#packet-resp", { y: -185, duration: 0.7, ease: "power1.inOut" }, 16.2);
+      tl.to("#packet-resp", { y: -370, x: 546, duration: 0.7, ease: "power1.inOut" }, 17);
+      tl.to("#packet-resp", { y: -520, duration: 0.5, ease: "power1.inOut" }, 17.8);
+      tl.to("#packet-resp", { autoAlpha: 0, duration: 0.3 }, 18.5);
+
+      // Clean up lifecycle labels
+      tl.to("#lifecycle-label", { autoAlpha: 0, duration: 0.5 }, 19.5);
+      tl.to("#lifecycle-step", { autoAlpha: 0, duration: 0.5 }, 19.5);
+
+      // Scene 8: Security Group Chain (21-30s)
+      tl.from("#sg-chain", { autoAlpha: 0, y: 30, duration: 0.8, ease: "power2.out" }, 21);
+      tl.to("#alb1 .sg-badge", { boxShadow: "0 0 12px rgba(217,48,37,0.5)", duration: 0.4, repeat: 3, yoyo: true, ease: "power1.inOut" }, 22);
+      tl.to("#alb2 .sg-badge", { boxShadow: "0 0 12px rgba(217,48,37,0.5)", duration: 0.4, repeat: 3, yoyo: true, ease: "power1.inOut" }, 22);
+      tl.to("#ec2-1 .sg-badge", { boxShadow: "0 0 12px rgba(27,102,15,0.5)", duration: 0.4, repeat: 3, yoyo: true, ease: "power1.inOut" }, 24);
+      tl.to("#ec2-2 .sg-badge", { boxShadow: "0 0 12px rgba(27,102,15,0.5)", duration: 0.4, repeat: 3, yoyo: true, ease: "power1.inOut" }, 24);
+      tl.to("#sg-chain", { autoAlpha: 0, duration: 0.5 }, 29.5);
+
+      // Scene 9: Health Checks (31-40s)
+      tl.from("#hc-label", { autoAlpha: 0, y: 20, duration: 0.5, ease: "power2.out" }, 31);
+      tl.from("#hc-detail", { autoAlpha: 0, duration: 0.3 }, 31.5);
+      tl.to("#hc-step1", { opacity: 1, duration: 0.3 }, 32);
+      tl.to("#hc-step2", { opacity: 1, duration: 0.3 }, 33.5);
+      tl.to("#hc-step3", { opacity: 1, duration: 0.3 }, 35);
+      tl.to("#hc-step4", { opacity: 1, duration: 0.3 }, 36.5);
+
+      // Health pulses (finite: 8s / 1s cycle = 7 repeats)
+      tl.to("#hc-pulse1", { scale: 2.5, autoAlpha: 0, duration: 0.5, repeat: 7, repeatDelay: 0.5, ease: "power2.out" }, 32);
+      tl.to("#hc-pulse2", { scale: 2.5, autoAlpha: 0, duration: 0.5, repeat: 7, repeatDelay: 0.5, ease: "power2.out" }, 32);
+      tl.to("#ec2-1", { boxShadow: "0 0 20px rgba(27,102,15,0.5)", duration: 0.5, repeat: 7, yoyo: true, ease: "sine.inOut" }, 32);
+      tl.to("#ec2-2", { boxShadow: "0 0 20px rgba(27,102,15,0.5)", duration: 0.5, repeat: 7, yoyo: true, ease: "sine.inOut" }, 32);
+
+      // Fade out health check labels
+      tl.to("#hc-label", { autoAlpha: 0, duration: 0.5 }, 39);
+      tl.to("#hc-detail", { autoAlpha: 0, duration: 0.5 }, 39);
+
+      // Scene 10: Summary (40-45s)
+      tl.from("#summary", { autoAlpha: 0, y: 20, duration: 0.8, ease: "power2.out" }, 40);
+      tl.from("#summary > div > div", { autoAlpha: 0, y: 10, duration: 0.3, stagger: 0.15, ease: "power2.out" }, 40.3);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

@@ -13,6 +13,7 @@ A running record of what's been built, what was proven, and the mental models th
 5. [Lab 2 — Public Subnet (IGW + Route Tables)](#lab-2--public-subnet-igw--route-tables)
 6. [Lab 3 — Private Subnet + NAT Gateway](#lab-3--private-subnet--nat-gateway)
 7. [Lab 4 — Security Groups vs NACLs](#lab-4--security-groups-vs-nacls)
+8. [Lab 5 — Application Load Balancer](#lab-5--application-load-balancer)
 
 ---
 
@@ -837,6 +838,80 @@ Lowest number evaluated first. First match wins, evaluation stops. A DENY at rul
 
 ---
 
+## Lab 5 — Application Load Balancer
+
+### The central claim
+
+> An ALB distributes HTTP traffic across targets in multiple AZs, health-checks them automatically, and routes around failures — all using the same networking primitives from Labs 1-4.
+
+### Architecture deployed
+
+```
+  Internet
+     │
+     ▼
+  ALB (lab05-alb)
+  ├── public-subnet-1 (10.0.1.0/24, us-east-1a)
+  └── public-subnet-2 (10.0.2.0/24, us-east-1b)
+       │
+       │  SG-to-SG: tcp/80 from lab05-alb-sg
+       │  local route (same VPC)
+       ▼
+  Target Group (lab05-targets)
+  ├── EC2 target-1 (10.0.10.212, private-subnet-1, us-east-1a) → nginx
+  └── EC2 target-2 (10.0.11.173, private-subnet-2, us-east-1b) → nginx
+       │
+       │  0.0.0.0/0 → NAT GW (for yum install nginx)
+       ▼
+  NAT Gateway → IGW → Internet
+```
+
+### Behavioral tests
+
+| Test | Result |
+|---|---|
+| `curl alb-url` (first) | target-2: i-07e... AZ us-east-1b |
+| `curl alb-url` (second) | target-1: i-001... AZ us-east-1a |
+| Stop nginx on target-1 | ALB detected failure in ~20s |
+| `curl alb-url` x4 after | ALL hit target-2 only |
+
+### Terraform patterns introduced
+
+**`count` + `cidrsubnet()`** — dynamic subnet creation:
+```
+cidrsubnet("10.0.0.0/16", 8, 1)  → 10.0.1.0/24
+cidrsubnet("10.0.0.0/16", 8, 10) → 10.0.10.0/24
+```
+
+**`user_data`** — bootstrap script that runs once at instance launch (installs nginx, writes HTML).
+
+**Self-referencing SG** — bastion and targets share the same SG; a self-ref rule allows SSH between them.
+
+### Gotcha: bastion SSH jump failed
+
+The target SG allowed SSH from the operator's public IP, but the bastion-to-target connection uses the bastion's private IP. Fixed with a self-referencing SG rule: "allow SSH from anyone wearing this same SG."
+
+### New mental models from Lab 5
+
+### 18. ALB = fleet of nodes behind a DNS name
+
+Not a single machine. AWS scales the fleet up/down based on traffic. That's why you get a DNS name, not a static IP — the IPs can change as nodes are added/removed.
+
+### 19. Health checks are the ALB's eyes
+
+Without health checks, the ALB blindly sends traffic to dead targets (502s). Health checks let it detect failures and route around them — but there's always a detection delay (interval x unhealthy threshold).
+
+### 20. Everything from Labs 1-4 combined
+
+The ALB lab used every concept so far:
+- VPC + subnets (Lab 1)
+- IGW + public route table (Lab 2)
+- NAT Gateway for private egress (Lab 3)
+- SG-to-SG references (Lab 1 EICE, now ALB→target)
+- Multiple AZs for redundancy
+
+---
+
 ## Cumulative cost
 
 | Lab | $ spent | Time alive |
@@ -846,8 +921,9 @@ Lowest number evaluated first. First match wins, evaluation stops. A DENY at rul
 | Lab 2 | $0 (free tier) | ~45 min |
 | Lab 3 | ~$0.01 (NAT GW) | ~15 min |
 | Lab 4 | $0 (free tier) | ~20 min |
-| **Total** | **~$0.01** | — |
+| Lab 5 | ~$0.03 (ALB + NAT) | ~30 min |
+| **Total** | **~$0.04** | — |
 
 ---
 
-*Last updated: 2026-05-08 — after Lab 4 destroy.*
+*Last updated: 2026-05-10 — after Lab 5 destroy.*
