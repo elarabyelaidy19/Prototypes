@@ -189,7 +189,8 @@ Health check target: Rails 8's built-in `/up`.
 - [x] Lab 1 — VPC + 2 subnets + 2 EC2s + EICE; verified intra-VPC reachability, no internet egress, route table = single `local` rule; destroyed cleanly (12 resources)
 - [x] Lab 2 — IGW + custom route table + public IP; proved three pillars of public access, IGW NAT, jump host to private subnet, break/fix (route removal froze SSH); destroyed cleanly (17 resources)
 - [x] Lab 3 — NAT Gateway in public subnet + private route table; EC2-B got outbound internet (yum install, curl ifconfig.me returned NAT EIP); break/fix confirmed; destroyed cleanly (21 resources)
-- [ ] Lab 4
+- [x] Lab 4 — SG vs NACL: removed SG egress → SSH survived (stateful), removed NACL egress → SSH froze (stateless); proved evaluation order NACL→SG inbound, SG→NACL outbound
+- [ ] Lab 5
 - [ ] Lab 3
 - [ ] Lab 4
 - [ ] Lab 5

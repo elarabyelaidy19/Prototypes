@@ -12,6 +12,7 @@ A running record of what's been built, what was proven, and the mental models th
 4. [Gotchas / surprises encountered](#gotchas--surprises-encountered)
 5. [Lab 2 — Public Subnet (IGW + Route Tables)](#lab-2--public-subnet-igw--route-tables)
 6. [Lab 3 — Private Subnet + NAT Gateway](#lab-3--private-subnet--nat-gateway)
+7. [Lab 4 — Security Groups vs NACLs](#lab-4--security-groups-vs-nacls)
 
 ---
 
@@ -704,6 +705,138 @@ Cheaper alternative: NAT instance (t3.nano ~$3.50/mo) with source/dest check dis
 
 ---
 
+## Lab 4 — Security Groups vs NACLs
+
+### The central claim
+
+> SGs are stateful (return traffic auto-allowed). NACLs are stateless (every packet evaluated independently). NACLs sit at the subnet boundary OUTSIDE the SG. A NACL deny overrides a SG allow.
+
+### Architecture deployed
+
+```
+                           Internet
+                              │
+                              ▼
+                     ┌──── IGW ────┐
+                     └──────┬──────┘
+                            │
+   ┌────────────────────────┼────────────────────────────────┐
+   │  Subnet (10.0.1.0/24)  │                                │
+   │                        │                                │
+   │  ┌──── NACL ───────────┼──────────────────────────┐     │
+   │  │  (subnet boundary)  │                          │     │
+   │  │                     ▼                          │     │
+   │  │  ┌──── Security Group ──────────────────┐      │     │
+   │  │  │  (instance boundary)                 │      │     │
+   │  │  │                                      │      │     │
+   │  │  │  ┌────────────────────────────────┐  │      │     │
+   │  │  │  │  EC2 (lab04-ec2)               │  │      │     │
+   │  │  │  │  10.0.1.218                    │  │      │     │
+   │  │  │  │  pub: 100.24.119.63            │  │      │     │
+   │  │  │  └────────────────────────────────┘  │      │     │
+   │  │  │                                      │      │     │
+   │  │  └──────────────────────────────────────┘      │     │
+   │  │                                                │     │
+   │  └────────────────────────────────────────────────┘     │
+   └─────────────────────────────────────────────────────────┘
+```
+
+### Experiment 1 — SG egress removed (stateful proof)
+
+```
+  Removed: SG "all egress" rule
+  Kept:    NACL allow-all both directions
+  
+  SSH session:    ✅ SURVIVED (SG remembered the inbound connection)
+  curl ifconfig:  ❌ HUNG (new outbound connection, no egress rule)
+```
+
+Stateful means: "I remember who started the conversation. If you came in on an allowed rule, your replies go free." But NEW outbound conversations still need an egress rule.
+
+```
+  SSH (inbound-initiated):              curl (outbound-initiated):
+  
+  Laptop ──SYN──> SG ingress ✅         EC2 ──SYN──> SG egress ❌
+  EC2 ──reply──> SG: "I remember        (no rule = blocked, stateful
+                 this connection,         doesn't help here because
+                 auto-allow" ✅           EC2 initiated it)
+```
+
+### Experiment 2 — NACL egress removed (stateless proof)
+
+```
+  Restored: SG "all egress" rule
+  Removed:  NACL outbound rule 100
+  
+  SSH session:    ❌ FROZE (NACL killed return packets)
+  Everything:     ❌ DEAD
+```
+
+The SG said "yes, return traffic, auto-allow." But the packet then hit the NACL at the subnet boundary — and the NACL has no memory, no state table, nothing. No outbound rule = implicit deny = packet dropped.
+
+```
+  SSH return packet's journey:
+  
+  EC2 sends reply
+       │
+       ▼
+  SG egress: "all out? ✅"           ← SG says yes
+       │
+       ▼
+  NACL outbound: "any rule?          ← NACL says no
+                  rule 100? deleted.
+                  implicit deny ❌"
+       │
+       ▼
+  DROPPED. Never leaves the subnet.
+```
+
+### Packet evaluation order (proven)
+
+```
+  INBOUND:                          OUTBOUND:
+  
+  Internet                          EC2 instance
+     │                                  │
+     ▼                                  ▼
+  1. NACL inbound  ──first──>       1. SG egress   ──first──>
+     │                                  │
+     ▼                                  ▼
+  2. SG ingress    ──second──>      2. NACL outbound ──second──>
+     │                                  │
+     ▼                                  ▼
+  EC2 instance                      Internet
+  
+  Packet must pass BOTH layers in BOTH directions.
+  NACL wraps the subnet. SG wraps the instance.
+```
+
+### New mental models from Lab 4
+
+### 14. SG stateful ≠ "all outbound works"
+
+Stateful only auto-allows RETURN traffic for allowed inbound connections. New outbound connections still need an egress rule. This is the nuance engineers miss.
+
+### 15. NACL can override SG
+
+Even when the SG says "allow," the NACL can drop the packet. The NACL is the outer wall — if it blocks, nothing gets through regardless of SG rules.
+
+### 16. NACLs exist for one reason: DENY rules
+
+SGs can only ALLOW. If you need to block a specific IP, port range, or pattern, you need a NACL. Use case: blocking a known-bad IP (`Rule 50: DENY from 203.0.113.50`) before the ALLOW-all rule.
+
+### 17. NACL rule number = priority
+
+Lowest number evaluated first. First match wins, evaluation stops. A DENY at rule 50 beats an ALLOW at rule 100 — the ALLOW is never reached.
+
+```
+  Rule 50:  DENY tcp/22    ← wins (evaluated first)
+  Rule 100: ALLOW tcp/22   ← never reached
+  Rule *:   DENY all       ← implicit, can't delete
+```
+
+---
+
 ## Cumulative cost
 
 | Lab | $ spent | Time alive |
@@ -712,8 +845,9 @@ Cheaper alternative: NAT instance (t3.nano ~$3.50/mo) with source/dest check dis
 | Lab 1 | $0 (free tier) | ~30 min |
 | Lab 2 | $0 (free tier) | ~45 min |
 | Lab 3 | ~$0.01 (NAT GW) | ~15 min |
+| Lab 4 | $0 (free tier) | ~20 min |
 | **Total** | **~$0.01** | — |
 
 ---
 
-*Last updated: 2026-05-08 — after Lab 3 destroy.*
+*Last updated: 2026-05-08 — after Lab 4 destroy.*
